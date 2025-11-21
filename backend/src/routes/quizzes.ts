@@ -227,14 +227,61 @@ router.post('/:quizId/attempt', async (req: Request, res: Response) => {
 
     if (error) throw error;
 
-    // Award XP to user
-    await supabase.from('xp_transactions').insert({
-      user_id: userId,
-      amount: xpEarned,
-      reason: isPerfect ? 'perfect_score' : 'quiz_completed',
-      quiz_attempt_id: attempt.id,
-      article_id: articleId
-    });
+    // Handle hearts: Deduct 1 heart if quiz failed (score < 75%)
+    const quizFailed = score < 75;
+    let heartLost = false;
+
+    if (quizFailed) {
+      const { data: userData } = await supabase
+        .from('users')
+        .select('hearts, hearts_lost_today, last_heart_lost_at')
+        .eq('id', userId)
+        .single();
+
+      if (userData && userData.hearts > 0) {
+        // Check if it's a new day (reset hearts_lost_today)
+        const now = new Date();
+        const lastLostDate = userData.last_heart_lost_at ? new Date(userData.last_heart_lost_at) : null;
+        const isNewDay = !lastLostDate ||
+          lastLostDate.toDateString() !== now.toDateString();
+
+        const heartsLostToday = isNewDay ? 0 : (userData.hearts_lost_today || 0);
+
+        // Deduct heart
+        await supabase
+          .from('users')
+          .update({
+            hearts: userData.hearts - 1,
+            hearts_lost_today: heartsLostToday + 1,
+            last_heart_lost_at: now.toISOString()
+          })
+          .eq('id', userId);
+
+        // Record transaction
+        await supabase.from('heart_transactions').insert({
+          user_id: userId,
+          amount: -1,
+          reason: 'quiz_failed',
+          quiz_id: quizId
+        });
+
+        heartLost = true;
+      }
+    }
+
+    // Award XP to user (only if quiz passed)
+    if (!quizFailed) {
+      await supabase.from('xp_transactions').insert({
+        user_id: userId,
+        amount: xpEarned,
+        reason: isPerfect ? 'perfect_score' : 'quiz_completed',
+        quiz_attempt_id: attempt.id,
+        article_id: articleId
+      });
+    } else {
+      // No XP for failed quiz
+      xpEarned = 0;
+    }
 
     // Update user's total XP and level
     const { data: currentUser } = await supabase
@@ -287,7 +334,11 @@ router.post('/:quizId/attempt', async (req: Request, res: Response) => {
       totalQuestions: questions.length,
       xpEarned,
       isPerfect,
-      message: isPerfect ? '🎉 Perfect score! +' + xpEarned + ' XP!' : '+' + xpEarned + ' XP',
+      quizFailed,
+      heartLost,
+      message: quizFailed
+        ? (heartLost ? '💔 Quiz failed - 1 heart lost' : '💔 Quiz failed - No hearts left!')
+        : (isPerfect ? '🎉 Perfect score! +' + xpEarned + ' XP!' : '+' + xpEarned + ' XP'),
       achievements: achievementResult.newUnlocks,
       achievementMessage: achievementResult.message
     });
