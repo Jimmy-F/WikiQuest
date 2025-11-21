@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { supabase } from '../server';
+import { checkAllAchievements } from '../services/achievementService';
 
 const router = Router();
 
@@ -192,12 +193,16 @@ router.post('/:id/complete', async (req: Request, res: Response) => {
     });
 
     // Check for achievement unlocks
-    // TODO: Implement achievement checking logic
+    const achievementResult = await checkAllAchievements(userId, {
+      readingTime: article.reading_time_seconds
+    });
 
     res.json({
       message: 'Article completed! +10 XP 🎉',
       article,
-      xpEarned: 10
+      xpEarned: 10,
+      achievements: achievementResult.newUnlocks,
+      achievementMessage: achievementResult.message
     });
   } catch (error: any) {
     console.error('Error completing article:', error);

@@ -67,6 +67,7 @@ import questsRouter from './routes/quests';
 import challengesRouter from './routes/challenges';
 import quizRouter from './routes/quiz';
 import heartsRouter from './routes/hearts';
+import leaderboardRouter from './routes/leaderboard';
 
 app.use('/api/users', usersRouter);
 app.use('/api/articles', articlesRouter);
@@ -78,6 +79,7 @@ app.use('/api/quests', questsRouter);
 app.use('/api/challenges', challengesRouter);
 app.use('/api/quiz', quizRouter);
 app.use('/api/hearts', heartsRouter);
+app.use('/api/leaderboard', leaderboardRouter);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { supabase } from '../server';
 import Anthropic from '@anthropic-ai/sdk';
+import { checkAllAchievements } from '../services/achievementService';
 
 const router = Router();
 
@@ -273,6 +274,12 @@ router.post('/:quizId/attempt', async (req: Request, res: Response) => {
         .eq('id', articleId);
     }
 
+    // Check for achievement unlocks
+    const achievementResult = await checkAllAchievements(userId, {
+      quizPassed: score >= 75,
+      perfectScore: isPerfect
+    });
+
     res.json({
       attempt,
       score,
@@ -280,7 +287,9 @@ router.post('/:quizId/attempt', async (req: Request, res: Response) => {
       totalQuestions: questions.length,
       xpEarned,
       isPerfect,
-      message: isPerfect ? '🎉 Perfect score! +' + xpEarned + ' XP!' : '+' + xpEarned + ' XP'
+      message: isPerfect ? '🎉 Perfect score! +' + xpEarned + ' XP!' : '+' + xpEarned + ' XP',
+      achievements: achievementResult.newUnlocks,
+      achievementMessage: achievementResult.message
     });
   } catch (error: any) {
     console.error('Error submitting quiz attempt:', error);
