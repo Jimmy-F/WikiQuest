@@ -49,6 +49,24 @@ services:
     command: npm run dev
     restart: unless-stopped
 
+  # Frontend Web Dashboard
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: wikiquest-frontend
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - wikiquest-network
+    command: npm run dev -- --host 0.0.0.0
+    restart: unless-stopped
+
   # Redis (caching + queue)
   redis:
     image: redis:7-alpine

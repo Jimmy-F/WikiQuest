@@ -23,9 +23,22 @@ router.post('/start', async (req: Request, res: Response) => {
       .single();
 
     if (existing) {
+      // Update visit count and last accessed
+      const { data: updated, error: updateError } = await supabase
+        .from('articles')
+        .update({
+          last_accessed: new Date().toISOString(),
+          visit_count: (existing.visit_count || 0) + 1
+        })
+        .eq('id', existing.id)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
       return res.json({
         message: 'Article already tracked',
-        article: existing
+        article: updated
       });
     }
 
@@ -141,26 +154,117 @@ router.post('/:id/complete', async (req: Request, res: Response) => {
   }
 });
 
-// Get user's reading history
+// Get user's reading history with enhanced stats
 router.get('/history', async (req: Request, res: Response) => {
   try {
     const { userId, limit = 50, offset = 0 } = req.query;
 
-    const { data, error } = await supabase
+    // Get articles with quiz attempts
+    const { data: articles, error } = await supabase
       .from('articles')
-      .select('*')
+      .select(`
+        *,
+        quiz_attempts (
+          score,
+          total_questions,
+          xp_earned,
+          created_at
+        )
+      `)
       .eq('user_id', userId)
-      .order('created_at', { ascending: false })
+      .order('last_accessed', { ascending: false })
       .range(Number(offset), Number(offset) + Number(limit) - 1);
 
     if (error) throw error;
 
+    // Calculate stats for each article
+    const articlesWithStats = articles?.map(article => {
+      const quizzes = article.quiz_attempts || [];
+      const bestQuiz = quizzes.reduce((best: any, quiz: any) => {
+        const percentage = (quiz.score / quiz.total_questions) * 100;
+        return percentage > (best?.percentage || 0) ? { ...quiz, percentage } : best;
+      }, null);
+
+      return {
+        ...article,
+        completion_percentage: article.total_paragraphs > 0
+          ? Math.round((article.paragraphs_read / article.total_paragraphs) * 100)
+          : 0,
+        best_quiz_score: bestQuiz?.percentage || 0,
+        total_xp_earned: quizzes.reduce((sum: number, q: any) => sum + (q.xp_earned || 0), 0),
+        quiz_count: quizzes.length
+      };
+    });
+
     res.json({
-      articles: data,
-      count: data.length
+      articles: articlesWithStats || [],
+      count: articlesWithStats?.length || 0
     });
   } catch (error: any) {
     console.error('Error fetching history:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get reading statistics
+router.get('/stats/:userId', async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+
+    // Get all articles
+    const { data: articles, error: articlesError } = await supabase
+      .from('articles')
+      .select('*')
+      .eq('user_id', userId);
+
+    if (articlesError) throw articlesError;
+
+    // Get quiz stats
+    const { data: quizzes, error: quizzesError } = await supabase
+      .from('quiz_attempts')
+      .select('*')
+      .eq('user_id', userId);
+
+    if (quizzesError) throw quizzesError;
+
+    // Calculate category stats
+    const categoryCount: Record<string, number> = {};
+    articles?.forEach(article => {
+      (article.wikipedia_categories || []).forEach((cat: string) => {
+        categoryCount[cat] = (categoryCount[cat] || 0) + 1;
+      });
+    });
+
+    const topCategories = Object.entries(categoryCount)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([category, count]) => ({ category, count }));
+
+    // Calculate reading streak
+    const uniqueDays = new Set(
+      articles?.map(a => new Date(a.last_accessed || a.created_at).toDateString()) || []
+    );
+
+    // Calculate stats
+    const stats = {
+      total_articles: articles?.length || 0,
+      total_reading_time: Math.round((articles?.reduce((sum, a) => sum + (a.reading_time_seconds || 0), 0) || 0) / 60), // in minutes
+      total_quizzes: quizzes?.length || 0,
+      average_quiz_score: quizzes?.length
+        ? Math.round(quizzes.reduce((sum, q) => sum + ((q.score / q.total_questions) * 100), 0) / quizzes.length)
+        : 0,
+      favorite_categories: topCategories,
+      unique_reading_days: uniqueDays.size,
+      articles_this_week: articles?.filter(a => {
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        return new Date(a.last_accessed || a.created_at) > weekAgo;
+      }).length || 0
+    };
+
+    res.json({ stats });
+  } catch (error: any) {
+    console.error('Error fetching stats:', error);
     res.status(500).json({ error: error.message });
   }
 });

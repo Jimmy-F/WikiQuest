@@ -57,19 +57,23 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 // API Routes (will be implemented)
+import usersRouter from './routes/users';
 import articlesRouter from './routes/articles';
 import quizzesRouter from './routes/quizzes';
 import reviewsRouter from './routes/reviews';
 import analyticsRouter from './routes/analytics';
 import achievementsRouter from './routes/achievements';
 import questsRouter from './routes/quests';
+import challengesRouter from './routes/challenges';
 
+app.use('/api/users', usersRouter);
 app.use('/api/articles', articlesRouter);
 app.use('/api/quizzes', quizzesRouter);
 app.use('/api/reviews', reviewsRouter);
 app.use('/api/analytics', analyticsRouter);
 app.use('/api/achievements', achievementsRouter);
 app.use('/api/quests', questsRouter);
+app.use('/api/challenges', challengesRouter);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

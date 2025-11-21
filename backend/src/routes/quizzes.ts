@@ -65,29 +65,38 @@ router.post('/generate', async (req: Request, res: Response) => {
     // Generate new quiz with Claude
     const model = userTier === 'free' ? 'claude-3-haiku-20240307' : 'claude-3-5-sonnet-20241022';
 
-    const prompt = `You are a learning assistant helping students learn from Wikipedia articles. Based on the following text, generate 2 multiple-choice questions that test comprehension.
+    const prompt = `You are a learning assistant. Generate quiz questions for this Wikipedia text.
 
-Text:
+Text to analyze:
 ${paragraphContent}
 
-Generate exactly 2 multiple-choice questions in this exact JSON format:
+CRITICAL: Return ONLY valid JSON, no explanatory text before or after.
+
+Output exactly this structure with 2 questions:
 {
   "questions": [
     {
-      "question": "Question text here?",
+      "question": "First question text?",
       "options": ["Option A", "Option B", "Option C", "Option D"],
       "correct_answer": 0,
-      "explanation": "Brief explanation of why this is correct"
+      "explanation": "Why this answer is correct"
+    },
+    {
+      "question": "Second question text?",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correct_answer": 2,
+      "explanation": "Why this answer is correct"
     }
   ]
 }
 
-Rules:
-- Questions should test actual comprehension, not trivial details
-- All 4 options should be plausible
-- Explanations should be 1-2 sentences
-- Focus on key concepts and important information
-- correct_answer is the index (0-3) of the correct option`;
+Requirements:
+- Output ONLY the JSON object above, nothing else
+- Generate exactly 2 questions
+- Test comprehension, not memorization
+- All 4 options must be plausible
+- correct_answer is the index (0-3) of the correct option
+- Keep explanations brief (1-2 sentences)`;
 
     const message = await anthropic.messages.create({
       model,
@@ -100,7 +109,33 @@ Rules:
 
     // Parse Claude's response
     const responseText = message.content[0].type === 'text' ? message.content[0].text : '';
-    const quizData = JSON.parse(responseText);
+
+    // Extract JSON from the response (Claude sometimes adds text before/after)
+    let quizData;
+    try {
+      // First try to parse the entire response as JSON
+      quizData = JSON.parse(responseText);
+    } catch (error) {
+      // If that fails, try to extract JSON from the text
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        try {
+          quizData = JSON.parse(jsonMatch[0]);
+        } catch (e) {
+          console.error('Failed to parse extracted JSON:', e);
+          throw new Error('Invalid quiz format from AI');
+        }
+      } else {
+        console.error('No JSON found in response:', responseText.substring(0, 200));
+        throw new Error('No valid quiz data in AI response');
+      }
+    }
+
+    // Validate the quiz data structure
+    if (!quizData || !Array.isArray(quizData.questions) || quizData.questions.length === 0) {
+      console.error('Invalid quiz structure:', quizData);
+      throw new Error('Invalid quiz structure from AI');
+    }
 
     // Save quiz to database
     const { data: quiz, error } = await supabase
@@ -200,21 +235,43 @@ router.post('/:quizId/attempt', async (req: Request, res: Response) => {
       article_id: articleId
     });
 
-    // Update user's total XP
-    await supabase.rpc('add_xp', {
-      p_user_id: userId,
-      p_amount: xpEarned
-    });
+    // Update user's total XP and level
+    const { data: currentUser } = await supabase
+      .from('users')
+      .select('total_xp, current_level')
+      .eq('id', userId)
+      .single();
+
+    if (currentUser) {
+      const newTotalXp = currentUser.total_xp + xpEarned;
+      const newLevel = Math.floor(newTotalXp / 100) + 1; // Level up every 100 XP
+
+      await supabase
+        .from('users')
+        .update({
+          total_xp: newTotalXp,
+          current_level: newLevel
+        })
+        .eq('id', userId);
+    }
 
     // Update article stats
-    await supabase
+    const { data: article } = await supabase
       .from('articles')
-      .update({
-        quiz_count: quiz.quiz_count + 1,
-        correct_answers: quiz.correct_answers + correctCount,
-        total_answers: quiz.total_answers + questions.length
-      })
-      .eq('id', articleId);
+      .select('quiz_count, correct_answers, total_answers')
+      .eq('id', articleId)
+      .single();
+
+    if (article) {
+      await supabase
+        .from('articles')
+        .update({
+          quiz_count: (article.quiz_count || 0) + 1,
+          correct_answers: (article.correct_answers || 0) + correctCount,
+          total_answers: (article.total_answers || 0) + questions.length
+        })
+        .eq('id', articleId);
+    }
 
     res.json({
       attempt,

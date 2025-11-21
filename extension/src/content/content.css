@@ -1,0 +1,273 @@
+/* WikiQuest Content Styles */
+
+/* Quiz Overlay */
+#wikiquest-quiz-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999999;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.wq-quiz-container {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.wq-quiz-header {
+  text-align: center;
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.wq-quiz-header h3 {
+  font-size: 24px;
+  color: #1a1a1a;
+  margin: 0 0 8px 0;
+  font-weight: 700;
+}
+
+.wq-quiz-header p {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+}
+
+.wq-quiz-questions {
+  margin-bottom: 24px;
+}
+
+.wq-question {
+  margin-bottom: 24px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 12px;
+}
+
+.wq-question-text {
+  font-size: 16px;
+  color: #1a1a1a;
+  margin: 0 0 16px 0;
+  line-height: 1.6;
+}
+
+.wq-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wq-option {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.wq-option:hover {
+  border-color: #6366f1;
+  background: #f0f1ff;
+}
+
+.wq-option input[type="radio"] {
+  margin-right: 12px;
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+}
+
+.wq-option span {
+  flex: 1;
+  font-size: 15px;
+  color: #333;
+}
+
+.wq-quiz-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.wq-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.wq-btn-primary {
+  background: #6366f1;
+  color: white;
+}
+
+.wq-btn-primary:hover {
+  background: #4f46e5;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.wq-btn-secondary {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.wq-btn-secondary:hover {
+  background: #d1d5db;
+}
+
+/* Quiz Results */
+.wq-results {
+  text-align: center;
+}
+
+.wq-results-header {
+  margin-bottom: 24px;
+  padding: 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  color: white;
+}
+
+.wq-results-header h3 {
+  font-size: 28px;
+  margin: 0 0 12px 0;
+  font-weight: 700;
+}
+
+.wq-score {
+  font-size: 20px;
+  margin: 0 0 8px 0;
+  font-weight: 600;
+}
+
+.wq-xp-earned {
+  font-size: 32px;
+  margin: 0;
+  font-weight: 700;
+  color: #fbbf24;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.wq-results-details {
+  margin-top: 24px;
+}
+
+.wq-result-item {
+  padding: 16px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  text-align: left;
+}
+
+.wq-result-item.correct {
+  background: #d1fae5;
+  border: 2px solid #10b981;
+}
+
+.wq-result-item.incorrect {
+  background: #fee2e2;
+  border: 2px solid #ef4444;
+}
+
+.wq-result-item p {
+  margin: 0;
+  font-size: 15px;
+  color: #1a1a1a;
+}
+
+.wq-explanation {
+  margin-top: 8px !important;
+  font-size: 14px !important;
+  color: #666 !important;
+  font-style: italic;
+}
+
+/* Toast Notifications */
+.wq-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: white;
+  padding: 16px 20px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  z-index: 1000000;
+  min-width: 300px;
+  transform: translateY(100px);
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.wq-toast.wq-toast-show {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.wq-toast-content strong {
+  display: block;
+  font-size: 16px;
+  color: #1a1a1a;
+  margin-bottom: 4px;
+}
+
+.wq-toast-content p {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+}
+
+/* Scrollbar for quiz container */
+.wq-quiz-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.wq-quiz-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.wq-quiz-container::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.wq-quiz-container::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

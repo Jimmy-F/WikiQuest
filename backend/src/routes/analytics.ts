@@ -30,6 +30,25 @@ router.get('/dashboard', async (req: Request, res: Response) => {
     const totalQuizzes = weekStats?.reduce((sum, stat) => sum + stat.quizzes_completed, 0) || 0;
     const totalXP = weekStats?.reduce((sum, stat) => sum + stat.xp_earned, 0) || 0;
 
+    if (!user) {
+      // User doesn't exist yet, return default data
+      return res.json({
+        user: {
+          total_xp: 0,
+          current_level: 1,
+          current_streak: 0,
+          longest_streak: 0,
+          xpToNextLevel: 100
+        },
+        thisWeek: {
+          articlesRead: totalArticles,
+          quizzesCompleted: totalQuizzes,
+          xpEarned: totalXP,
+          dailyStats: weekStats || []
+        }
+      });
+    }
+
     res.json({
       user: {
         ...user,
@@ -39,7 +58,7 @@ router.get('/dashboard', async (req: Request, res: Response) => {
         articlesRead: totalArticles,
         quizzesCompleted: totalQuizzes,
         xpEarned: totalXP,
-        dailyStats: weekStats
+        dailyStats: weekStats || []
       }
     });
   } catch (error: any) {

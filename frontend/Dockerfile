@@ -9,11 +9,8 @@ RUN npm install
 # Copy source
 COPY . .
 
-# Build TypeScript
-RUN npm run build
-
 # Expose port
-EXPOSE 3000
+EXPOSE 3001
 
-# Start server
-CMD ["npm", "start"]
+# Start dev server
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>WikiQuest Debug</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 40px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    button {
+      background: #6366f1;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 8px;
+    }
+    button:hover {
+      background: #4f46e5;
+    }
+    #info {
+      margin-top: 20px;
+      padding: 20px;
+      border-radius: 8px;
+      background: #f3f4f6;
+      white-space: pre-wrap;
+      font-family: monospace;
+    }
+    .success {
+      background: #d1fae5;
+      color: #065f46;
+      padding: 12px;
+      border-radius: 8px;
+      margin: 12px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎮 WikiQuest Debug Panel</h1>
+
+  <button id="showStorageBtn">Show Current Storage</button>
+  <button id="clearCreateBtn">Clear & Create New User</button>
+
+  <div id="info"></div>
+
+  <script src="debug.js"></script>
+</body>
+</html>

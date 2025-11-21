@@ -12,8 +12,5 @@ COPY . .
 # Build TypeScript
 RUN npm run build
 
-# Expose port
-EXPOSE 3000
-
-# Start server
+# Start worker
 CMD ["npm", "start"]

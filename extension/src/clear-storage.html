@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Clear WikiQuest Storage</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 40px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    button {
+      background: #6366f1;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background: #4f46e5;
+    }
+    #status {
+      margin-top: 20px;
+      padding: 12px;
+      border-radius: 8px;
+      display: none;
+    }
+    .success {
+      background: #d1fae5;
+      color: #065f46;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎮 WikiQuest Storage Manager</h1>
+  <p>Click the button below to clear your user ID and start fresh with a new account.</p>
+
+  <button onclick="clearStorage()">Clear Storage & Reset</button>
+
+  <div id="status"></div>
+
+  <script>
+    async function clearStorage() {
+      try {
+        await chrome.storage.local.clear();
+        const status = document.getElementById('status');
+        status.textContent = '✅ Storage cleared! Close this tab and reload the extension.';
+        status.className = 'success';
+        status.style.display = 'block';
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
+    }
+  </script>
+</body>
+</html>
