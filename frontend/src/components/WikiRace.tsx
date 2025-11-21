@@ -279,8 +279,33 @@ const WikiRace: React.FC<WikiRaceProps> = ({ userId, onBack }) => {
         setCurrentArticle(articleName);
 
         if (data.completed) {
-          // Race finished!
-          await completeRace();
+          // Race finished! Show instant celebration
+          if (timerRef.current) {
+            clearInterval(timerRef.current);
+          }
+
+          // Show celebration immediately (optimistic UI)
+          const estimatedResult = {
+            clicks: data.path.length - 1,
+            optimalPath: selectedRace?.optimalPath || 0,
+            path: data.path,
+            timeSeconds: timer,
+            medal: '', // Will be filled by API
+            score: 0,
+            message: '',
+            xpEarned: 0,
+            isFirstCompletion: false
+          };
+
+          setResult(estimatedResult);
+
+          // Check if beat optimal path - show celebration INSTANTLY
+          if (!isCustom && estimatedResult.clicks < estimatedResult.optimalPath) {
+            setShowOptimalCelebration(true);
+          }
+
+          // Complete race in background and update with real data
+          completeRace();
         } else {
           // Load next article
           await loadArticle(articleName);
@@ -299,16 +324,13 @@ const WikiRace: React.FC<WikiRaceProps> = ({ userId, onBack }) => {
       });
 
       const data = await response.json();
+
+      // Update with real result data from server
       setResult(data);
 
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-
-      // Check if user beat the optimal path - show celebration BEFORE results
-      if (!isCustom && data.clicks < data.optimalPath) {
-        setShowOptimalCelebration(true);
-        // Show celebration for 3 seconds, then transition to results
+      // Transition to results after celebration
+      if (showOptimalCelebration) {
+        // If celebrating, wait 3 seconds then show results
         setTimeout(() => {
           setShowOptimalCelebration(false);
           setGameState('finished');
@@ -319,6 +341,8 @@ const WikiRace: React.FC<WikiRaceProps> = ({ userId, onBack }) => {
       }
     } catch (error) {
       console.error('Error completing race:', error);
+      // On error, still show results
+      setGameState('finished');
     }
   };
 

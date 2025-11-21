@@ -199,26 +199,37 @@ router.post('/:raceId/complete', async (req: Request, res: Response) => {
       })
       .eq('id', raceId);
 
-    // Award XP to user (only for official races, not custom, and only on first completion)
+    // Award XP to user (only for official races, not custom, and only for medal improvements)
     let isFirstCompletion = false;
+    let isMedalImprovement = false;
     if (!race.is_custom && xpEarned > 0) {
-      // Check if this is the first time completing this specific race
+      // Check if user has completed this race before and what medal they got
       const { data: existingCompletion } = await supabase
         .from('race_first_completions')
-        .select('id')
+        .select('*')
         .eq('user_id', race.user_id)
         .eq('race_id', race.race_id)
         .single();
 
+      // Medal tier values for comparison
+      const medalValue: { [key: string]: number } = {
+        'bronze': 1,
+        'silver': 2,
+        'gold': 3
+      };
+
       if (!existingCompletion) {
-        // This is the first completion - award XP
+        // First time completing this race - award XP
         isFirstCompletion = true;
 
-        // Record first completion
+        // Record first completion with best medal
         await supabase.from('race_first_completions').insert({
           user_id: race.user_id,
           race_id: race.race_id,
-          completed_at: completedAt.toISOString()
+          completed_at: completedAt.toISOString(),
+          best_medal: medal,
+          best_score: totalScore,
+          best_time: timeSeconds
         });
 
         // Award XP
@@ -243,8 +254,55 @@ router.post('/:raceId/complete', async (req: Request, res: Response) => {
             .eq('id', race.user_id);
         }
       } else {
-        // Already completed before - no XP
-        xpEarned = 0;
+        // Already completed before - only award XP if medal improved
+        const currentMedalValue = medalValue[medal] || 0;
+        const bestMedalValue = medalValue[existingCompletion.best_medal] || 0;
+
+        if (currentMedalValue > bestMedalValue) {
+          // Medal improved! Award XP for improvement
+          isMedalImprovement = true;
+
+          // Update best medal
+          await supabase
+            .from('race_first_completions')
+            .update({
+              best_medal: medal,
+              best_score: Math.max(totalScore, existingCompletion.best_score || 0),
+              best_time: Math.min(timeSeconds, existingCompletion.best_time || 999999)
+            })
+            .eq('user_id', race.user_id)
+            .eq('race_id', race.race_id);
+
+          // Award XP for improvement
+          await supabase.from('xp_transactions').insert({
+            user_id: race.user_id,
+            amount: xpEarned,
+            reason: 'wiki_race',
+            wiki_race_id: raceId,
+            metadata: {
+              medal,
+              difficulty: race.difficulty,
+              medal_improvement: true,
+              previous_medal: existingCompletion.best_medal
+            }
+          });
+
+          const { data: userData } = await supabase
+            .from('users')
+            .select('total_xp')
+            .eq('id', race.user_id)
+            .single();
+
+          if (userData) {
+            await supabase
+              .from('users')
+              .update({ total_xp: (userData.total_xp || 0) + xpEarned })
+              .eq('id', race.user_id);
+          }
+        } else {
+          // Same or worse medal - no XP
+          xpEarned = 0;
+        }
       }
     }
 
@@ -369,7 +427,8 @@ router.post('/:raceId/complete', async (req: Request, res: Response) => {
       xpEarned,
       path: race.article_path,
       unlockedAchievements,
-      isFirstCompletion
+      isFirstCompletion,
+      isMedalImprovement
     });
   } catch (error: any) {
     console.error('Error completing race:', error);
