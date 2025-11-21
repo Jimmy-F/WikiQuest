@@ -115,10 +115,16 @@
   color: #1e293b;
   padding: 20px 24px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 16px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   border-bottom: 1px solid #e2e8f0;
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .quit-button {
@@ -262,23 +268,26 @@
   color: #2563eb;
 }
 
-/* Path Tracker */
-.path-tracker {
-  background: white;
-  border-top: 1px solid #e2e8f0;
-  margin: 0;
-  padding: 20px;
+/* Path Tracker in Header */
+.path-tracker-header {
   display: flex;
-  flex-direction: column;
   align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  overflow-x: auto;
+  max-width: 100%;
 }
 
-.path-tracker h3 {
-  margin: 0 0 12px;
-  font-size: 14px;
+.path-label {
+  font-size: 13px;
+  font-weight: 600;
   color: #64748b;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  white-space: nowrap;
 }
 
 .path-items {
@@ -286,8 +295,6 @@
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  justify-content: center;
-  max-width: 1200px;
 }
 
 .path-item {

@@ -518,31 +518,44 @@ const WikiRace: React.FC<WikiRaceProps> = ({ userId, onBack }) => {
     return (
       <div className="wikirace-game">
         <div className="game-header">
-          <button className="quit-button" onClick={resetRace}>
-            Quit Race
-          </button>
-          <div className="race-progress">
-            <div className="current-location">
-              <span className="label">Current:</span>
-              <span className="article-name">{currentArticle}</span>
+          <div className="header-top">
+            <button className="quit-button" onClick={resetRace}>
+              Quit Race
+            </button>
+            <div className="race-progress">
+              <div className="current-location">
+                <span className="label">Current:</span>
+                <span className="article-name">{currentArticle}</span>
+              </div>
+              <div className="target-location">
+                <span className="label">Target:</span>
+                <span className="article-name target">{targetArticle}</span>
+              </div>
             </div>
-            <div className="target-location">
-              <span className="label">Target:</span>
-              <span className="article-name target">{targetArticle}</span>
+            <div className="game-stats">
+              <div className="stat">
+                <span className="stat-label">Time</span>
+                <span className="stat-value">{formatTime(timer)}</span>
+              </div>
+              <div className="stat">
+                <span className="stat-label">Clicks</span>
+                <span className="stat-value">{path.length - 1}</span>
+              </div>
+              <div className="stat">
+                <span className="stat-label">Optimal</span>
+                <span className="stat-value">{selectedRace?.optimalPath}</span>
+              </div>
             </div>
           </div>
-          <div className="game-stats">
-            <div className="stat">
-              <span className="stat-label">Time</span>
-              <span className="stat-value">{formatTime(timer)}</span>
-            </div>
-            <div className="stat">
-              <span className="stat-label">Clicks</span>
-              <span className="stat-value">{path.length - 1}</span>
-            </div>
-            <div className="stat">
-              <span className="stat-label">Optimal</span>
-              <span className="stat-value">{selectedRace?.optimalPath}</span>
+          <div className="path-tracker-header">
+            <span className="path-label">Your Path:</span>
+            <div className="path-items">
+              {path.map((article, idx) => (
+                <React.Fragment key={idx}>
+                  <span className="path-item">{article}</span>
+                  {idx < path.length - 1 && <span className="path-arrow">→</span>}
+                </React.Fragment>
+              ))}
             </div>
           </div>
         </div>
@@ -562,18 +575,6 @@ const WikiRace: React.FC<WikiRaceProps> = ({ userId, onBack }) => {
               />
             </div>
           )}
-        </div>
-
-        <div className="path-tracker">
-          <h3>Your Path:</h3>
-          <div className="path-items">
-            {path.map((article, idx) => (
-              <React.Fragment key={idx}>
-                <span className="path-item">{article}</span>
-                {idx < path.length - 1 && <span className="path-arrow">→</span>}
-              </React.Fragment>
-            ))}
-          </div>
         </div>
       </div>
     );

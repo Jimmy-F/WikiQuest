@@ -252,16 +252,16 @@ function EnhancedDashboard({ userId, onLogout }: EnhancedDashboardProps) {
             ✨ Adventure Mode
           </button>
           <button
+            className={`nav-btn wikirace-btn-featured ${activeTab === 'wikirace' ? 'active' : ''}`}
+            onClick={() => setActiveTab('wikirace')}
+          >
+            🏁 Wiki Race
+          </button>
+          <button
             className={`nav-btn explorer-btn ${activeTab === 'explorer' ? 'active' : ''}`}
             onClick={() => setActiveTab('explorer')}
           >
             🧭 Explorer Mode
-          </button>
-          <button
-            className={`nav-btn wikirace-btn ${activeTab === 'wikirace' ? 'active' : ''}`}
-            onClick={() => setActiveTab('wikirace')}
-          >
-            🏁 Wiki Race
           </button>
           <button
             className={`nav-btn ${activeTab === 'challenges' ? 'active' : ''}`}
