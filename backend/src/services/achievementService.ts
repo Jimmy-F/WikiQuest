@@ -78,7 +78,7 @@ export async function checkAndUnlockAchievements(
       // Check achievement requirements based on type
       switch (achievement.requirement_type) {
         case 'articles_read':
-          progress = articlesCount || 0;
+          progress = user.articles_read || 0;
           shouldUnlock = progress >= achievement.requirement_value;
           break;
 

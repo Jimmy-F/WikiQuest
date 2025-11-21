@@ -53,7 +53,7 @@ const ExplorerMode: React.FC<ExplorerModeProps> = ({
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [showAchievements, setShowAchievements] = useState(false);
-  const [categories] = useState<Category[]>([
+  const [categories, setCategories] = useState<Category[]>([
     {
       id: 'history',
       name: 'History',
@@ -333,16 +333,16 @@ const ExplorerMode: React.FC<ExplorerModeProps> = ({
 
   // Update category progress based on completed articles
   useEffect(() => {
-    const updatedCategories = categories.map(category => {
+    setCategories(prevCategories => prevCategories.map(category => {
       let completed = 0;
       let currentLevel = 1;
 
-      category.articles.forEach(level => {
-        level.items.forEach(article => {
-          if (completedArticles.includes(article.title)) {
+      const updatedArticles = category.articles.map(level => ({
+        ...level,
+        items: level.items.map(article => {
+          const isCompleted = completedArticles.includes(article.title);
+          if (isCompleted) {
             completed++;
-            article.completed = true;
-            article.golden = goldenArticles.includes(article.title);
 
             // Update current level based on completion
             const levelCompletion = level.items.filter(a =>
@@ -353,15 +353,22 @@ const ExplorerMode: React.FC<ExplorerModeProps> = ({
               currentLevel = level.level + 1;
             }
           }
-        });
-      });
+
+          return {
+            ...article,
+            completed: isCompleted,
+            golden: goldenArticles.includes(article.title)
+          };
+        })
+      }));
 
       return {
         ...category,
+        articles: updatedArticles,
         articlesCompleted: completed,
         currentLevel: Math.min(currentLevel, category.articles.length)
       };
-    });
+    }));
   }, [completedArticles, goldenArticles]);
 
   const getDifficultyColor = (difficulty: string) => {

@@ -227,12 +227,15 @@ cron.schedule('*/15 * * * *', async () => {
   console.log('[CRON] Checking heart regeneration...');
   try {
     // Get users with less than max hearts
-    const { data: users, error } = await supabase
+    // Note: We select all users and filter in JS since Supabase doesn't support column comparisons
+    const { data: allUsers, error } = await supabase
       .from('users')
-      .select('id, hearts, max_hearts, heart_refill_time')
-      .lt('hearts', supabase.raw('max_hearts'));
+      .select('id, hearts, max_hearts, heart_refill_time');
 
     if (error) throw error;
+
+    // Filter to users with hearts < max_hearts
+    const users = (allUsers || []).filter(u => u.hearts < u.max_hearts);
 
     const now = new Date();
 

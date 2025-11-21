@@ -85,6 +85,18 @@ services:
     command: redis-server --appendonly yes
     restart: unless-stopped
 
+  # Marketing Website
+  website:
+    build:
+      context: ./website
+      dockerfile: Dockerfile
+    container_name: wikiquest-website
+    ports:
+      - "8081:80"
+    networks:
+      - wikiquest-network
+    restart: unless-stopped
+
 networks:
   wikiquest-network:
     driver: bridge

@@ -3,7 +3,9 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import QuestPath from '../components/QuestPath';
 import QuizModal from '../components/QuizModal';
 import ExplorerMode from '../components/ExplorerMode';
+import WikiRace from '../components/WikiRace';
 import Hearts from '../components/Hearts';
+import AchievementPopup from '../components/AchievementPopup';
 import './EnhancedDashboard.css';
 
 interface EnhancedDashboardProps {
@@ -69,6 +71,7 @@ function EnhancedDashboard({ userId, onLogout }: EnhancedDashboardProps) {
   const [currentArticleIcon, setCurrentArticleIcon] = useState<string>('');
   const [goldenArticles, setGoldenArticles] = useState<string[]>([]);
   const [isStructuredMode, setIsStructuredMode] = useState(false); // Track if in Adventure/Explorer mode
+  const [newAchievement, setNewAchievement] = useState<any>(null); // Track newly unlocked achievement for popup
 
   useEffect(() => {
     loadAllData();
@@ -253,6 +256,12 @@ function EnhancedDashboard({ userId, onLogout }: EnhancedDashboardProps) {
             onClick={() => setActiveTab('explorer')}
           >
             🧭 Explorer Mode
+          </button>
+          <button
+            className={`nav-btn wikirace-btn ${activeTab === 'wikirace' ? 'active' : ''}`}
+            onClick={() => setActiveTab('wikirace')}
+          >
+            🏁 Wiki Race
           </button>
           <button
             className={`nav-btn ${activeTab === 'challenges' ? 'active' : ''}`}
@@ -573,121 +582,6 @@ function EnhancedDashboard({ userId, onLogout }: EnhancedDashboardProps) {
             )}
 
             {/* Active Quest with Visual Path */}
-            {/* Quiz Modal */}
-            {showQuiz && currentArticle && (
-              <QuizModal
-                article={currentArticle}
-                articleIcon={currentArticleIcon}
-                onComplete={async (passed, golden, percentage) => {
-                  // Check if score is below 75% and deduct a heart
-                  if (!passed && percentage < 75) {
-                    try {
-                      const response = await fetch('/api/hearts/lose', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          userId,
-                          score: percentage
-                        })
-                      });
-
-                      const heartResult = await response.json();
-
-                      if (!heartResult.canContinue) {
-                        // No more hearts - redirect to challenges
-                        setShowQuiz(false);
-                        setActiveTab('challenges');
-                        alert('Out of hearts! Complete daily challenges or wait for hearts to regenerate.');
-                        return;
-                      }
-                    } catch (error) {
-                      console.error('Error losing heart:', error);
-                    }
-                  }
-
-                  if (passed) {
-                    // Update completed articles
-                    const updatedArticles = [
-                      ...(activeQuest.completed_articles || []),
-                      currentArticle
-                    ];
-
-                    // Track completion in backend
-                    try {
-                      await fetch('/api/articles/complete', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          userId,
-                          article: currentArticle,
-                          questId: activeQuest.quest_id,
-                          golden,
-                          score: percentage
-                        })
-                      });
-
-                      // Update local state
-                      setActiveQuest({
-                        ...activeQuest,
-                        completed_articles: updatedArticles,
-                        golden_articles: golden ? [
-                          ...(activeQuest.golden_articles || []),
-                          currentArticle
-                        ] : activeQuest.golden_articles
-                      });
-
-                      // Add to articles list immediately
-                      const newArticle = {
-                        id: `quest-${currentArticle}-${Date.now()}`,
-                        wikipedia_title: currentArticle,
-                        wikipedia_url: `https://en.wikipedia.org/wiki/${currentArticle.replace(/ /g, '_')}`,
-                        completion_percentage: 100,
-                        best_quiz_score: Math.round(percentage),
-                        total_xp_earned: golden ? 20 : 10
-                      };
-
-                      setArticles(prev => [newArticle, ...prev.filter(a => a.wikipedia_title !== currentArticle)]);
-
-                      // Track golden articles globally
-                      if (golden) {
-                        setGoldenArticles(prev => [...prev, currentArticle]);
-                      }
-
-                      // Check if stage is complete and advance
-                      const currentStageData = activeQuest.quest_details.stages[activeQuest.current_stage - 1];
-                      const stageComplete = currentStageData.articles.every((article: string) =>
-                        updatedArticles.includes(article)
-                      );
-
-                      if (stageComplete && activeQuest.current_stage < activeQuest.quest_details.stages.length) {
-                        setActiveQuest({
-                          ...activeQuest,
-                          completed_articles: updatedArticles,
-                          golden_articles: golden ? [
-                            ...(activeQuest.golden_articles || []),
-                            currentArticle
-                          ] : activeQuest.golden_articles,
-                          current_stage: activeQuest.current_stage + 1
-                        });
-                      }
-
-                      // Update articles read count
-                      loadAllData();
-                    } catch (error) {
-                      console.error('Error tracking article completion:', error);
-                    }
-                  }
-
-                  setShowQuiz(false);
-                  setCurrentArticle('');
-                }}
-                onClose={() => {
-                  setShowQuiz(false);
-                  setCurrentArticle('');
-                }}
-              />
-            )}
-
             {activeQuest && activeQuest.quest_details && (
               <QuestPath
                 stages={activeQuest.quest_details.stages}
@@ -807,7 +701,7 @@ function EnhancedDashboard({ userId, onLogout }: EnhancedDashboardProps) {
           <div className="explorer-tab">
             <ExplorerMode
               userId={userId}
-              completedArticles={articles.map(a => a.wikipedia_title)}
+              completedArticles={articles.filter(a => a.completed).map(a => a.wikipedia_title)}
               goldenArticles={goldenArticles}
               achievements={Object.values(achievements).flat().map((a: any) => ({
                 id: a.id,
@@ -837,7 +731,157 @@ function EnhancedDashboard({ userId, onLogout }: EnhancedDashboardProps) {
             />
           </div>
         )}
+
+        {/* Wiki Race Tab */}
+        {activeTab === 'wikirace' && (
+          <div className="wikirace-tab">
+            <WikiRace
+              userId={userId}
+              onBack={() => setActiveTab('overview')}
+            />
+          </div>
+        )}
       </main>
+
+      {/* Global Quiz Modal - available for all tabs */}
+      {showQuiz && currentArticle && (
+        <QuizModal
+          article={currentArticle}
+          articleIcon={currentArticleIcon}
+          onComplete={async (passed, golden, percentage) => {
+            console.log('Quiz onComplete called:', { passed, golden, percentage, currentArticle });
+
+            // Deduct a heart if quiz failed
+            if (!passed) {
+              try {
+                const response = await fetch('/api/hearts/lose', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    userId,
+                    score: percentage
+                  })
+                });
+
+                const heartResult = await response.json();
+
+                if (!heartResult.canContinue) {
+                  // No more hearts - redirect to challenges
+                  setShowQuiz(false);
+                  setActiveTab('challenges');
+                  alert('Out of hearts! Complete daily challenges or wait for hearts to regenerate.');
+                  return;
+                }
+              } catch (error) {
+                console.error('Error losing heart:', error);
+              }
+            }
+
+            if (passed) {
+              // Update completed articles
+              const updatedArticles = [
+                ...(activeQuest?.completed_articles || []),
+                currentArticle
+              ];
+
+              // Track completion in backend
+              try {
+                const response = await fetch('/api/articles/complete', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    userId,
+                    article: currentArticle,
+                    questId: activeQuest?.quest_id,
+                    golden,
+                    score: percentage
+                  })
+                });
+
+                const result = await response.json();
+
+                // Check if any achievements were unlocked
+                if (result.achievements && result.achievements.length > 0) {
+                  // Show popup for first achievement (can be extended to queue multiple)
+                  setNewAchievement(result.achievements[0]);
+                  // Reload achievements in background
+                  setTimeout(() => loadAllData(), 1000);
+                }
+
+                // Update local state if activeQuest exists
+                if (activeQuest) {
+                  setActiveQuest({
+                    ...activeQuest,
+                    completed_articles: updatedArticles,
+                    golden_articles: golden ? [
+                      ...(activeQuest.golden_articles || []),
+                      currentArticle
+                    ] : activeQuest.golden_articles
+                  });
+                }
+
+                // Add to articles list immediately
+                const newArticle = {
+                  id: `quest-${currentArticle}-${Date.now()}`,
+                  wikipedia_title: currentArticle,
+                  wikipedia_url: `https://en.wikipedia.org/wiki/${currentArticle.replace(/ /g, '_')}`,
+                  completion_percentage: 100,
+                  best_quiz_score: Math.round(percentage),
+                  total_xp_earned: golden ? 20 : 10,
+                  last_accessed: new Date().toISOString(),
+                  reading_time_seconds: 0
+                };
+
+                setArticles(prev => [newArticle, ...prev.filter(a => a.wikipedia_title !== currentArticle)]);
+
+                // Track golden articles globally
+                if (golden) {
+                  setGoldenArticles(prev => [...prev, currentArticle]);
+                }
+
+                // Check if stage is complete and advance (only for quest mode)
+                if (activeQuest && activeQuest.quest_details) {
+                  const currentStageData = activeQuest.quest_details.stages[activeQuest.current_stage - 1];
+                  const stageComplete = currentStageData.articles.every((article: string) =>
+                    updatedArticles.includes(article)
+                  );
+
+                  if (stageComplete && activeQuest.current_stage < activeQuest.quest_details.stages.length) {
+                    setActiveQuest({
+                      ...activeQuest,
+                      completed_articles: updatedArticles,
+                      golden_articles: golden ? [
+                        ...(activeQuest.golden_articles || []),
+                        currentArticle
+                      ] : activeQuest.golden_articles,
+                      current_stage: activeQuest.current_stage + 1
+                    });
+                  }
+                }
+
+                // Update articles read count
+                await loadAllData();
+              } catch (error) {
+                console.error('Error tracking article completion:', error);
+              }
+            }
+
+            // Close quiz modal after completion is tracked
+            setShowQuiz(false);
+            setCurrentArticle('');
+          }}
+          onClose={() => {
+            setShowQuiz(false);
+            setCurrentArticle('');
+          }}
+        />
+      )}
+
+      {/* Achievement Unlock Popup */}
+      <AchievementPopup
+        achievement={newAchievement}
+        onClose={() => setNewAchievement(null)}
+      />
     </div>
   );
 }

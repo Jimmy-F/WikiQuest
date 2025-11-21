@@ -80,6 +80,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ article, articleIcon, onComplete,
   };
 
   const handleComplete = () => {
+    console.log('Continue Journey clicked', results);
     if (results) {
       onComplete(results.passed, results.golden, results.percentage);
     }
@@ -110,6 +111,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ article, articleIcon, onComplete,
     return (
       <div className="quiz-modal-overlay">
         <div className="quiz-modal results">
+          <button className="close-btn" onClick={onClose}>×</button>
           <div className={`results-header ${results.golden ? 'golden' : results.passed ? 'passed' : 'failed'}`}>
             <div className="results-icon">
               {results.golden ? '🏆' : results.passed ? '✅' : '❌'}

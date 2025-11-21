@@ -101,6 +101,26 @@ router.post('/complete', async (req: Request, res: Response) => {
   try {
     const { userId, article, questId, golden, score } = req.body;
 
+    // Mark article as completed in articles table
+    const wikipediaUrl = `https://en.wikipedia.org/wiki/${article.replace(/ /g, '_')}`;
+    const { data: existingArticle } = await supabase
+      .from('articles')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('wikipedia_url', wikipediaUrl)
+      .single();
+
+    if (existingArticle) {
+      await supabase
+        .from('articles')
+        .update({
+          completed: true,
+          completed_at: new Date().toISOString(),
+          comprehension_score: score
+        })
+        .eq('id', existingArticle.id);
+    }
+
     // Track in article_reads table if it exists
     try {
       await supabase
@@ -133,13 +153,30 @@ router.post('/complete', async (req: Request, res: Response) => {
           total_xp: (userData.total_xp || 0) + xpGained
         })
         .eq('id', userId);
+
+      // Record XP transaction
+      await supabase.from('xp_transactions').insert({
+        user_id: userId,
+        amount: xpGained,
+        reason: golden ? 'golden_completion' : 'article_completed',
+        article_id: article
+      });
     }
+
+    // Check for achievement unlocks
+    const achievementResult = await checkAllAchievements(userId, {
+      articleCompleted: true,
+      goldenCompletion: golden,
+      quizScore: score
+    });
 
     res.json({
       success: true,
       message: golden ? 'Golden completion! 🏆' : 'Article completed! ✅',
       xpGained: golden ? 20 : 10,
-      score
+      score,
+      achievements: achievementResult.newUnlocks,
+      achievementMessage: achievementResult.message
     });
   } catch (error: any) {
     console.error('Error completing article:', error);

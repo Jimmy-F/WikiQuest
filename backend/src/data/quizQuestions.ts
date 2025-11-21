@@ -172,7 +172,285 @@ export const QUIZ_QUESTIONS: { [article: string]: any[] } = {
     }
   ],
 
-  // Stage 3: Life Basics
+  // ============================================
+  // EXPLORER MODE - History Category
+  // ============================================
+  'Ancient Egypt': [
+    {
+      question: 'What was the primary writing system used in Ancient Egypt?',
+      options: ['Cuneiform', 'Hieroglyphics', 'Latin', 'Sanskrit'],
+      correct: 1,
+      explanation: 'Ancient Egyptians used hieroglyphics, a system of pictorial symbols.'
+    },
+    {
+      question: 'Which river was essential to Ancient Egyptian civilization?',
+      options: ['Tigris', 'Euphrates', 'Nile', 'Amazon'],
+      correct: 2,
+      explanation: 'The Nile River provided water, food, and transportation for Ancient Egypt.'
+    },
+    {
+      question: 'What were the massive stone structures built as tombs for pharaohs?',
+      options: ['Temples', 'Pyramids', 'Ziggurats', 'Castles'],
+      correct: 1,
+      explanation: 'The pyramids were monumental tombs built for Egyptian pharaohs.'
+    },
+    {
+      question: 'Who was the famous female pharaoh of Ancient Egypt?',
+      options: ['Nefertiti', 'Cleopatra', 'Hatshepsut', 'Isis'],
+      correct: 2,
+      explanation: 'Hatshepsut was one of the most successful female pharaohs, ruling for over 20 years.'
+    }
+  ],
+
+  'Roman Empire': [
+    {
+      question: 'Who was the first emperor of Rome?',
+      options: ['Julius Caesar', 'Augustus', 'Nero', 'Constantine'],
+      correct: 1,
+      explanation: 'Augustus (Octavian) became the first Roman Emperor in 27 BCE.'
+    },
+    {
+      question: 'What was the Roman system of government called before the Empire?',
+      options: ['Democracy', 'Monarchy', 'Republic', 'Oligarchy'],
+      correct: 2,
+      explanation: 'Rome was a Republic before becoming an Empire, with elected officials and senators.'
+    },
+    {
+      question: 'What architectural innovation did Romans perfect?',
+      options: ['The arch', 'The pyramid', 'The dome', 'Both A and C'],
+      correct: 3,
+      explanation: 'Romans perfected both the arch and the dome, revolutionary architectural techniques.'
+    },
+    {
+      question: 'In what year did the Western Roman Empire fall?',
+      options: ['476 CE', '500 CE', '410 CE', '1453 CE'],
+      correct: 0,
+      explanation: 'The Western Roman Empire fell in 476 CE when Romulus Augustulus was deposed.'
+    }
+  ],
+
+  'Middle Ages': [
+    {
+      question: 'What system of land ownership dominated Medieval Europe?',
+      options: ['Capitalism', 'Feudalism', 'Socialism', 'Communism'],
+      correct: 1,
+      explanation: 'Feudalism was the dominant social and economic system in Medieval Europe.'
+    },
+    {
+      question: 'What were the religious military campaigns to the Holy Land called?',
+      options: ['Jihads', 'Crusades', 'Pilgrimages', 'Inquisitions'],
+      correct: 1,
+      explanation: 'The Crusades were a series of religious wars fought between Christians and Muslims.'
+    },
+    {
+      question: 'What devastating disease killed millions in Europe during the 1300s?',
+      options: ['Smallpox', 'The Black Death', 'Influenza', 'Cholera'],
+      correct: 1,
+      explanation: 'The Black Death (bubonic plague) killed an estimated 75-200 million people.'
+    },
+    {
+      question: 'Who were the armored warriors on horseback in Medieval times?',
+      options: ['Samurai', 'Knights', 'Spartans', 'Legionnaires'],
+      correct: 1,
+      explanation: 'Knights were the mounted warriors of Medieval Europe, bound by chivalric codes.'
+    }
+  ],
+
+  'Renaissance': [
+    {
+      question: 'What does "Renaissance" mean?',
+      options: ['Rebirth', 'Revolution', 'Reform', 'Renewal'],
+      correct: 0,
+      explanation: 'Renaissance means "rebirth," referring to the revival of classical learning and art.'
+    },
+    {
+      question: 'Who painted the Mona Lisa?',
+      options: ['Michelangelo', 'Leonardo da Vinci', 'Raphael', 'Donatello'],
+      correct: 1,
+      explanation: 'Leonardo da Vinci painted the Mona Lisa around 1503-1519.'
+    },
+    {
+      question: 'In which Italian city did the Renaissance begin?',
+      options: ['Rome', 'Venice', 'Florence', 'Milan'],
+      correct: 2,
+      explanation: 'The Renaissance began in Florence, Italy, in the 14th century.'
+    },
+    {
+      question: 'What invention greatly helped spread Renaissance ideas?',
+      options: ['Telegraph', 'Printing press', 'Radio', 'Telescope'],
+      correct: 1,
+      explanation: 'Gutenberg\'s printing press revolutionized the spread of knowledge during the Renaissance.'
+    }
+  ],
+
+  'Industrial Revolution': [
+    {
+      question: 'Where did the Industrial Revolution begin?',
+      options: ['France', 'Germany', 'Britain', 'United States'],
+      correct: 2,
+      explanation: 'The Industrial Revolution began in Britain in the late 18th century.'
+    },
+    {
+      question: 'What was the primary energy source that powered early factories?',
+      options: ['Electricity', 'Steam', 'Oil', 'Nuclear'],
+      correct: 1,
+      explanation: 'Steam power, particularly the steam engine, drove the Industrial Revolution.'
+    },
+    {
+      question: 'What industry was first to be transformed by industrialization?',
+      options: ['Agriculture', 'Textile', 'Mining', 'Transportation'],
+      correct: 1,
+      explanation: 'The textile industry was the first to adopt mechanization and factory systems.'
+    },
+    {
+      question: 'What major social change resulted from industrialization?',
+      options: ['Rural migration', 'Urbanization', 'Population decline', 'Agricultural growth'],
+      correct: 1,
+      explanation: 'Industrialization led to massive urbanization as people moved to cities for factory work.'
+    }
+  ],
+
+  'World War I': [
+    {
+      question: 'What event triggered the start of World War I?',
+      options: ['Pearl Harbor', 'Assassination of Archduke Franz Ferdinand', 'Invasion of Poland', 'Sinking of the Lusitania'],
+      correct: 1,
+      explanation: 'The assassination of Archduke Franz Ferdinand in 1914 triggered WWI.'
+    },
+    {
+      question: 'What new weapon caused massive casualties in trench warfare?',
+      options: ['Tanks', 'Machine guns', 'Poison gas', 'All of the above'],
+      correct: 3,
+      explanation: 'WWI saw the introduction of machine guns, poison gas, and tanks, all causing heavy casualties.'
+    },
+    {
+      question: 'When did World War I end?',
+      options: ['1914', '1916', '1918', '1920'],
+      correct: 2,
+      explanation: 'World War I ended on November 11, 1918, with an armistice.'
+    },
+    {
+      question: 'What treaty officially ended WWI?',
+      options: ['Treaty of Paris', 'Treaty of Versailles', 'Treaty of Vienna', 'Treaty of Ghent'],
+      correct: 1,
+      explanation: 'The Treaty of Versailles was signed in 1919, officially ending WWI.'
+    }
+  ],
+
+  // ============================================
+  // EXPLORER MODE - Science Category
+  // ============================================
+  'Gravity': [
+    {
+      question: 'Who formulated the law of universal gravitation?',
+      options: ['Albert Einstein', 'Isaac Newton', 'Galileo Galilei', 'Johannes Kepler'],
+      correct: 1,
+      explanation: 'Isaac Newton formulated the law of universal gravitation in 1687.'
+    },
+    {
+      question: 'What happens to gravity as distance between objects increases?',
+      options: ['Gets stronger', 'Gets weaker', 'Stays the same', 'Disappears'],
+      correct: 1,
+      explanation: 'Gravitational force decreases with the square of the distance between objects.'
+    },
+    {
+      question: 'What is the acceleration due to gravity on Earth?',
+      options: ['9.8 m/s²', '10 km/h', '32 ft/min', '100 m/s²'],
+      correct: 0,
+      explanation: 'Earth\'s gravitational acceleration is approximately 9.8 meters per second squared.'
+    },
+    {
+      question: 'Which has stronger gravity?',
+      options: ['Earth', 'Moon', 'Jupiter', 'Mars'],
+      correct: 2,
+      explanation: 'Jupiter has the strongest gravity of these options due to its massive size.'
+    }
+  ],
+
+  'Magnetism': [
+    {
+      question: 'What are the two poles of a magnet called?',
+      options: ['Positive and Negative', 'North and South', 'East and West', 'Top and Bottom'],
+      correct: 1,
+      explanation: 'Magnets have North and South poles that attract and repel each other.'
+    },
+    {
+      question: 'What happens when you bring two north poles together?',
+      options: ['They attract', 'They repel', 'They cancel out', 'Nothing happens'],
+      correct: 1,
+      explanation: 'Like poles (north-north or south-south) repel each other.'
+    },
+    {
+      question: 'Which metal is magnetic?',
+      options: ['Copper', 'Aluminum', 'Iron', 'Gold'],
+      correct: 2,
+      explanation: 'Iron is ferromagnetic and strongly attracted to magnets.'
+    },
+    {
+      question: 'What is Earth itself?',
+      options: ['A giant battery', 'A giant magnet', 'A giant capacitor', 'A giant conductor'],
+      correct: 1,
+      explanation: 'Earth acts as a giant magnet with north and south magnetic poles.'
+    }
+  ],
+
+  'Light': [
+    {
+      question: 'What is the speed of light in a vacuum?',
+      options: ['300,000 km/s', '150,000 km/s', '1,000,000 km/s', '30,000 km/s'],
+      correct: 0,
+      explanation: 'Light travels at approximately 300,000 kilometers per second in a vacuum.'
+    },
+    {
+      question: 'Light behaves as both a particle and a...',
+      options: ['Gas', 'Liquid', 'Wave', 'Solid'],
+      correct: 2,
+      explanation: 'Light exhibits wave-particle duality, behaving as both particles (photons) and waves.'
+    },
+    {
+      question: 'What happens when white light passes through a prism?',
+      options: ['It disappears', 'It turns black', 'It splits into colors', 'It gets brighter'],
+      correct: 2,
+      explanation: 'A prism refracts white light, splitting it into its component colors (spectrum).'
+    },
+    {
+      question: 'Which color of visible light has the longest wavelength?',
+      options: ['Blue', 'Green', 'Yellow', 'Red'],
+      correct: 3,
+      explanation: 'Red light has the longest wavelength in the visible spectrum.'
+    }
+  ],
+
+  'Sound': [
+    {
+      question: 'How does sound travel?',
+      options: ['Through light', 'Through waves', 'Through electricity', 'Through magnetism'],
+      correct: 1,
+      explanation: 'Sound travels as mechanical waves through a medium like air, water, or solids.'
+    },
+    {
+      question: 'Can sound travel through a vacuum?',
+      options: ['Yes', 'No', 'Only loud sounds', 'Only soft sounds'],
+      correct: 1,
+      explanation: 'Sound cannot travel through a vacuum because it requires a medium to propagate.'
+    },
+    {
+      question: 'What determines the pitch of a sound?',
+      options: ['Amplitude', 'Frequency', 'Volume', 'Speed'],
+      correct: 1,
+      explanation: 'Frequency determines pitch - higher frequencies produce higher pitched sounds.'
+    },
+    {
+      question: 'What is the speed of sound in air at room temperature?',
+      options: ['343 m/s', '3,000 m/s', '30 m/s', '3,430 m/s'],
+      correct: 0,
+      explanation: 'Sound travels at approximately 343 meters per second in air at 20°C.'
+    }
+  ],
+
+  // ============================================
+  // EXPLORER MODE - Biology Category
+  // ============================================
   'Cell': [
     {
       question: 'What is the basic unit of life?',
@@ -197,12 +475,6 @@ export const QUIZ_QUESTIONS: { [article: string]: any[] } = {
       options: ['Charles Darwin', 'Louis Pasteur', 'Robert Hooke', 'Gregor Mendel'],
       correct: 2,
       explanation: 'Robert Hooke first observed and named cells in 1665 while examining cork.'
-    },
-    {
-      question: 'What structure controls what enters and leaves a cell?',
-      options: ['Cell wall', 'Cytoplasm', 'Cell membrane', 'Nucleus'],
-      correct: 2,
-      explanation: 'The cell membrane is selectively permeable, controlling substance movement in and out of the cell.'
     }
   ],
 
@@ -257,94 +529,33 @@ export const QUIZ_QUESTIONS: { [article: string]: any[] } = {
       options: ['Mitochondria', 'Nucleus', 'Chloroplasts', 'Cell wall'],
       correct: 2,
       explanation: 'Photosynthesis occurs in chloroplasts, specialized organelles in plant cells.'
-    },
-    {
-      question: 'What gas do plants absorb during photosynthesis?',
-      options: ['Oxygen', 'Nitrogen', 'Carbon dioxide', 'Hydrogen'],
-      correct: 2,
-      explanation: 'Plants absorb carbon dioxide from the air to use in photosynthesis.'
     }
   ],
 
-  // Add more questions for remaining articles...
-  'Gravity': [
+  'Evolution': [
     {
-      question: 'Who formulated the law of universal gravitation?',
-      options: ['Albert Einstein', 'Isaac Newton', 'Galileo Galilei', 'Johannes Kepler'],
-      correct: 1,
-      explanation: 'Isaac Newton formulated the law of universal gravitation in 1687.'
+      question: 'Who is credited with the theory of evolution by natural selection?',
+      options: ['Albert Einstein', 'Isaac Newton', 'Charles Darwin', 'Gregor Mendel'],
+      correct: 2,
+      explanation: 'Charles Darwin proposed the theory of evolution by natural selection.'
     },
     {
-      question: 'What happens to gravity as distance between objects increases?',
-      options: ['Gets stronger', 'Gets weaker', 'Stays the same', 'Disappears'],
-      correct: 1,
-      explanation: 'Gravitational force decreases with the square of the distance between objects.'
-    },
-    {
-      question: 'What is the acceleration due to gravity on Earth?',
-      options: ['9.8 m/s²', '10 km/h', '32 ft/min', '100 m/s²'],
+      question: 'What is natural selection?',
+      options: ['Survival of the fittest', 'Random mutation', 'Artificial breeding', 'Genetic engineering'],
       correct: 0,
-      explanation: 'Earth\'s gravitational acceleration is approximately 9.8 meters per second squared.'
+      explanation: 'Natural selection is the process where organisms better adapted to their environment tend to survive.'
     },
     {
-      question: 'Which has stronger gravity?',
-      options: ['Earth', 'Moon', 'Jupiter', 'Mars'],
-      correct: 2,
-      explanation: 'Jupiter has the strongest gravity of these options due to its massive size.'
-    }
-  ],
-
-  'Energy': [
-    {
-      question: 'What is the law of conservation of energy?',
-      options: ['Energy can be created', 'Energy can be destroyed', 'Energy cannot be created or destroyed', 'Energy always increases'],
-      correct: 2,
-      explanation: 'Energy cannot be created or destroyed, only transformed from one form to another.'
-    },
-    {
-      question: 'What are the two main types of energy?',
-      options: ['Hot and Cold', 'Kinetic and Potential', 'Light and Dark', 'Fast and Slow'],
-      correct: 1,
-      explanation: 'The two main categories are kinetic energy (motion) and potential energy (stored).'
-    },
-    {
-      question: 'What is the SI unit of energy?',
-      options: ['Watt', 'Volt', 'Joule', 'Newton'],
-      correct: 2,
-      explanation: 'The Joule (J) is the standard international unit of energy.'
-    },
-    {
-      question: 'Which is an example of renewable energy?',
-      options: ['Coal', 'Natural gas', 'Solar power', 'Nuclear fission'],
-      correct: 2,
-      explanation: 'Solar power is renewable because sunlight is continuously replenished.'
-    }
-  ],
-
-  'Light': [
-    {
-      question: 'What is the speed of light in a vacuum?',
-      options: ['300,000 km/s', '150,000 km/s', '1,000,000 km/s', '30,000 km/s'],
-      correct: 0,
-      explanation: 'Light travels at approximately 300,000 kilometers per second in a vacuum.'
-    },
-    {
-      question: 'Light behaves as both a particle and a...',
-      options: ['Gas', 'Liquid', 'Wave', 'Solid'],
-      correct: 2,
-      explanation: 'Light exhibits wave-particle duality, behaving as both particles (photons) and waves.'
-    },
-    {
-      question: 'What happens when white light passes through a prism?',
-      options: ['It disappears', 'It turns black', 'It splits into colors', 'It gets brighter'],
-      correct: 2,
-      explanation: 'A prism refracts white light, splitting it into its component colors (spectrum).'
-    },
-    {
-      question: 'Which color of visible light has the longest wavelength?',
-      options: ['Blue', 'Green', 'Yellow', 'Red'],
+      question: 'What provides evidence for evolution?',
+      options: ['Fossils', 'DNA similarities', 'Comparative anatomy', 'All of the above'],
       correct: 3,
-      explanation: 'Red light has the longest wavelength in the visible spectrum.'
+      explanation: 'Multiple lines of evidence support evolution, including fossils, DNA, and anatomical comparisons.'
+    },
+    {
+      question: 'How long does evolution typically take?',
+      options: ['Days', 'Years', 'Centuries', 'Millions of years'],
+      correct: 3,
+      explanation: 'Significant evolutionary changes typically occur over millions of years.'
     }
   ]
 };
