@@ -22,12 +22,25 @@ interface Category {
   }[];
 }
 
+interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  unlocked: boolean;
+  progress: number;
+  total: number;
+  xp_reward: number;
+  rarity: 'common' | 'rare' | 'epic' | 'legendary';
+}
+
 interface ExplorerModeProps {
   userId: string;
   completedArticles: string[];
   goldenArticles: string[];
   onStartArticle: (article: string, category: string, level: number) => void;
   onBack: () => void;
+  achievements?: Achievement[];
 }
 
 const ExplorerMode: React.FC<ExplorerModeProps> = ({
@@ -35,9 +48,11 @@ const ExplorerMode: React.FC<ExplorerModeProps> = ({
   completedArticles,
   goldenArticles,
   onStartArticle,
-  onBack
+  onBack,
+  achievements = []
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [showAchievements, setShowAchievements] = useState(false);
   const [categories] = useState<Category[]>([
     {
       id: 'history',
@@ -488,7 +503,48 @@ const ExplorerMode: React.FC<ExplorerModeProps> = ({
           <h1>🧭 Explorer Mode</h1>
           <p>Choose a category to begin your learning journey</p>
         </div>
+
+        <button
+          className="achievements-toggle"
+          onClick={() => setShowAchievements(!showAchievements)}
+        >
+          🏆 Achievements ({achievements.filter(a => a.unlocked).length}/{achievements.length})
+        </button>
       </div>
+
+      {showAchievements && (
+        <div className="achievements-section">
+          <h2>Explorer Achievements</h2>
+          <div className="achievements-grid">
+            {achievements.map((achievement) => (
+              <div
+                key={achievement.id}
+                className={`achievement-badge ${achievement.unlocked ? 'unlocked' : 'locked'} ${achievement.rarity}`}
+              >
+                <div className="badge-icon">{achievement.icon}</div>
+                <div className="badge-content">
+                  <h4>{achievement.name}</h4>
+                  <p>{achievement.description}</p>
+                  {!achievement.unlocked && achievement.progress > 0 && (
+                    <div className="achievement-progress">
+                      <div
+                        className="progress-bar-mini"
+                        style={{
+                          '--progress': `${(achievement.progress / achievement.total) * 100}%`
+                        } as React.CSSProperties}
+                      />
+                      <span>{achievement.progress}/{achievement.total}</span>
+                    </div>
+                  )}
+                  {achievement.unlocked && (
+                    <div className="xp-earned">+{achievement.xp_reward} XP</div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="categories-grid">
         {categories.map(category => {

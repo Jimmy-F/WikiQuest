@@ -56,7 +56,7 @@ app.get('/', (req: Request, res: Response) => {
   });
 });
 
-// API Routes (will be implemented)
+// API Routes
 import usersRouter from './routes/users';
 import articlesRouter from './routes/articles';
 import quizzesRouter from './routes/quizzes';

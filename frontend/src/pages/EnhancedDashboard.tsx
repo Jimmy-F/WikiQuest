@@ -162,12 +162,39 @@ function EnhancedDashboard({ userId, onLogout }: EnhancedDashboardProps) {
     }
   };
 
-  // Calculate chart data
-  const weekData = articles.slice(0, 7).map(article => ({
-    day: new Date(article.last_accessed).toLocaleDateString('en', { weekday: 'short' }),
-    xp: article.total_xp_earned,
-    minutes: Math.round(article.reading_time_seconds / 60)
-  })).reverse();
+  // Calculate chart data - show last 7 days with all weekdays
+  const getLast7Days = () => {
+    const days = [];
+    const today = new Date();
+
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dayName = date.toLocaleDateString('en', { weekday: 'short' });
+      const dateStr = date.toISOString().split('T')[0];
+
+      // Find articles for this day
+      const dayArticles = articles.filter(article =>
+        article.last_accessed.startsWith(dateStr)
+      );
+
+      // Calculate totals for the day
+      const totalXp = dayArticles.reduce((sum, a) => sum + (a.total_xp_earned || 0), 0);
+      const totalMinutes = dayArticles.reduce((sum, a) =>
+        sum + Math.round((a.reading_time_seconds || 0) / 60), 0
+      );
+
+      days.push({
+        day: dayName,
+        xp: totalXp,
+        minutes: totalMinutes
+      });
+    }
+
+    return days;
+  };
+
+  const weekData = getLast7Days();
 
   const categoryData = readingStats?.favorite_categories || [];
   const COLORS = ['#4fc3f7', '#81c784', '#ffb74d', '#e57373', '#ba68c8'];
@@ -782,6 +809,17 @@ function EnhancedDashboard({ userId, onLogout }: EnhancedDashboardProps) {
               userId={userId}
               completedArticles={articles.map(a => a.wikipedia_title)}
               goldenArticles={goldenArticles}
+              achievements={Object.values(achievements).flat().map((a: any) => ({
+                id: a.id,
+                name: a.name,
+                description: a.description,
+                icon: a.icon,
+                unlocked: a.unlocked || false,
+                progress: a.progress || 0,
+                total: a.requirement_value || 1,
+                xp_reward: a.xp_reward || 0,
+                rarity: a.rarity || 'common'
+              }))}
               onStartArticle={(article, category, level) => {
                 setCurrentArticle(article);
                 setCurrentArticleIcon('📚');
