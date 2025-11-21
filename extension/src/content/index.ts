@@ -28,6 +28,7 @@ class WikiQuestContent {
   private lastQuizTime: number = 0;
   private quizCooldown: number = 30000; // 30 seconds between quizzes
   private quizActive: boolean = false;
+  private isStructuredMode: boolean = false; // Track if in Adventure/Explorer mode
 
   constructor() {
     this.init();
@@ -35,8 +36,17 @@ class WikiQuestContent {
 
   async init() {
     // Get user ID from storage (using sync storage with wq_ prefix)
-    const result = await chrome.storage.sync.get(['wq_userId']);
+    const result = await chrome.storage.sync.get(['wq_userId', 'wq_structuredMode']);
     this.userId = result.wq_userId;
+
+    // Check if we're in structured mode (Adventure/Explorer)
+    this.isStructuredMode = result.wq_structuredMode || false;
+
+    // Also check URL parameters for structured mode flag
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('wq_mode') === 'structured') {
+      this.isStructuredMode = true;
+    }
 
     if (!this.userId) {
       console.log('No user logged in - please login at http://localhost:3001');
@@ -46,6 +56,7 @@ class WikiQuestContent {
     }
 
     console.log('User authenticated:', this.userId);
+    console.log('Structured mode:', this.isStructuredMode);
 
     // Detect if we're on a Wikipedia article
     if (this.isWikipediaArticle()) {
@@ -333,6 +344,14 @@ class WikiQuestContent {
 
   async onSectionChange(newSection: string) {
     console.log(`Moving from section "${this.currentSection}" to "${newSection}"`);
+
+    // Skip quizzes if in structured mode (Adventure/Explorer)
+    if (this.isStructuredMode) {
+      console.log('Structured mode active - skipping random quiz');
+      this.currentSection = newSection;
+      this.collectSectionContent(newSection);
+      return;
+    }
 
     // Only show quiz if we've read a section and have content
     if (this.currentSection &&

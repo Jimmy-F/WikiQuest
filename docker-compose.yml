@@ -9,12 +9,11 @@ services:
     container_name: wikiquest-backend
     ports:
       - "3000:3000"
+    env_file:
+      - ./backend/.env
     environment:
       - NODE_ENV=development
       - PORT=3000
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
-      - CLAUDE_API_KEY=${CLAUDE_API_KEY}
       - REDIS_URL=redis://redis:6379
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
     volumes:
@@ -24,6 +23,9 @@ services:
       - redis
     networks:
       - wikiquest-network
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     command: npm run dev
     restart: unless-stopped
 
@@ -46,6 +48,9 @@ services:
       - redis
     networks:
       - wikiquest-network
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     command: npm run dev
     restart: unless-stopped
 

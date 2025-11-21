@@ -95,7 +95,58 @@ router.patch('/:id/progress', async (req: Request, res: Response) => {
   }
 });
 
-// Complete an article
+// Complete an article with quiz
+router.post('/complete', async (req: Request, res: Response) => {
+  try {
+    const { userId, article, questId, golden, score } = req.body;
+
+    // Track in article_reads table if it exists
+    try {
+      await supabase
+        .from('article_reads')
+        .insert({
+          user_id: userId,
+          article_title: article,
+          read_at: new Date().toISOString(),
+          quiz_score: score,
+          golden_completion: golden
+        });
+    } catch (err) {
+      console.log('Could not track in article_reads:', err);
+    }
+
+    // Update user stats
+    const { data: userData } = await supabase
+      .from('users')
+      .select('articles_read, total_xp')
+      .eq('id', userId)
+      .single();
+
+    if (userData) {
+      const xpGained = golden ? 20 : 10; // Bonus XP for golden completion
+
+      await supabase
+        .from('users')
+        .update({
+          articles_read: (userData.articles_read || 0) + 1,
+          total_xp: (userData.total_xp || 0) + xpGained
+        })
+        .eq('id', userId);
+    }
+
+    res.json({
+      success: true,
+      message: golden ? 'Golden completion! 🏆' : 'Article completed! ✅',
+      xpGained: golden ? 20 : 10,
+      score
+    });
+  } catch (error: any) {
+    console.error('Error completing article:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Complete an article (old version)
 router.post('/:id/complete', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -168,7 +219,7 @@ router.get('/history', async (req: Request, res: Response) => {
           score,
           total_questions,
           xp_earned,
-          created_at
+          attempted_at
         )
       `)
       .eq('user_id', userId)

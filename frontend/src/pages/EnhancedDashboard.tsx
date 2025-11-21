@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import QuestPath from '../components/QuestPath';
+import QuizModal from '../components/QuizModal';
+import ExplorerMode from '../components/ExplorerMode';
+import Hearts from '../components/Hearts';
 import './EnhancedDashboard.css';
 
 interface EnhancedDashboardProps {
@@ -61,6 +64,11 @@ function EnhancedDashboard({ userId, onLogout }: EnhancedDashboardProps) {
   const [questProgress, setQuestProgress] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+  const [showQuiz, setShowQuiz] = useState(false);
+  const [currentArticle, setCurrentArticle] = useState<string>('');
+  const [currentArticleIcon, setCurrentArticleIcon] = useState<string>('');
+  const [goldenArticles, setGoldenArticles] = useState<string[]>([]);
+  const [isStructuredMode, setIsStructuredMode] = useState(false); // Track if in Adventure/Explorer mode
 
   useEffect(() => {
     loadAllData();
@@ -104,10 +112,21 @@ function EnhancedDashboard({ userId, onLogout }: EnhancedDashboardProps) {
         setStats(statsData.user);
       }
 
-      // Load articles history
+      // Load articles history (include completed quest articles)
       const articlesResponse = await fetch(`/api/articles/history?userId=${userId}&limit=10`);
       const articlesData = await articlesResponse.json();
-      setArticles(articlesData.articles || []);
+
+      // Add completed quest articles as mock data for now
+      const questArticles = activeQuest?.completed_articles?.map((title: string) => ({
+        id: `quest-${title}`,
+        wikipedia_title: title,
+        wikipedia_url: `https://en.wikipedia.org/wiki/${title.replace(/ /g, '_')}`,
+        completion_percentage: 100,
+        best_quiz_score: activeQuest?.golden_articles?.includes(title) ? 100 : 80,
+        total_xp_earned: activeQuest?.golden_articles?.includes(title) ? 20 : 10
+      })) || [];
+
+      setArticles([...questArticles, ...(articlesData.articles || [])]);
 
       // Load daily challenges
       const challengesResponse = await fetch(`/api/challenges/daily/${userId}`);
@@ -172,6 +191,15 @@ function EnhancedDashboard({ userId, onLogout }: EnhancedDashboardProps) {
             <span className="level-icon">👑</span>
             <span>Level {stats?.current_level || 1}</span>
           </div>
+
+          {/* Hearts Display - moved next to level */}
+          <Hearts
+            userId={userId}
+            onNoHearts={() => {
+              // Show warning when out of hearts
+              setActiveTab('challenges');
+            }}
+          />
         </div>
 
         <nav className="dash-nav">
@@ -192,6 +220,12 @@ function EnhancedDashboard({ userId, onLogout }: EnhancedDashboardProps) {
             onClick={() => setActiveTab('adventure')}
           >
             ✨ Adventure Mode
+          </button>
+          <button
+            className={`nav-btn explorer-btn ${activeTab === 'explorer' ? 'active' : ''}`}
+            onClick={() => setActiveTab('explorer')}
+          >
+            🧭 Explorer Mode
           </button>
           <button
             className={`nav-btn ${activeTab === 'challenges' ? 'active' : ''}`}
@@ -512,20 +546,144 @@ function EnhancedDashboard({ userId, onLogout }: EnhancedDashboardProps) {
             )}
 
             {/* Active Quest with Visual Path */}
+            {/* Quiz Modal */}
+            {showQuiz && currentArticle && (
+              <QuizModal
+                article={currentArticle}
+                articleIcon={currentArticleIcon}
+                onComplete={async (passed, golden, percentage) => {
+                  // Check if score is below 75% and deduct a heart
+                  if (!passed && percentage < 75) {
+                    try {
+                      const response = await fetch('/api/hearts/lose', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          userId,
+                          score: percentage
+                        })
+                      });
+
+                      const heartResult = await response.json();
+
+                      if (!heartResult.canContinue) {
+                        // No more hearts - redirect to challenges
+                        setShowQuiz(false);
+                        setActiveTab('challenges');
+                        alert('Out of hearts! Complete daily challenges or wait for hearts to regenerate.');
+                        return;
+                      }
+                    } catch (error) {
+                      console.error('Error losing heart:', error);
+                    }
+                  }
+
+                  if (passed) {
+                    // Update completed articles
+                    const updatedArticles = [
+                      ...(activeQuest.completed_articles || []),
+                      currentArticle
+                    ];
+
+                    // Track completion in backend
+                    try {
+                      await fetch('/api/articles/complete', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          userId,
+                          article: currentArticle,
+                          questId: activeQuest.quest_id,
+                          golden,
+                          score: percentage
+                        })
+                      });
+
+                      // Update local state
+                      setActiveQuest({
+                        ...activeQuest,
+                        completed_articles: updatedArticles,
+                        golden_articles: golden ? [
+                          ...(activeQuest.golden_articles || []),
+                          currentArticle
+                        ] : activeQuest.golden_articles
+                      });
+
+                      // Add to articles list immediately
+                      const newArticle = {
+                        id: `quest-${currentArticle}-${Date.now()}`,
+                        wikipedia_title: currentArticle,
+                        wikipedia_url: `https://en.wikipedia.org/wiki/${currentArticle.replace(/ /g, '_')}`,
+                        completion_percentage: 100,
+                        best_quiz_score: Math.round(percentage),
+                        total_xp_earned: golden ? 20 : 10
+                      };
+
+                      setArticles(prev => [newArticle, ...prev.filter(a => a.wikipedia_title !== currentArticle)]);
+
+                      // Track golden articles globally
+                      if (golden) {
+                        setGoldenArticles(prev => [...prev, currentArticle]);
+                      }
+
+                      // Check if stage is complete and advance
+                      const currentStageData = activeQuest.quest_details.stages[activeQuest.current_stage - 1];
+                      const stageComplete = currentStageData.articles.every((article: string) =>
+                        updatedArticles.includes(article)
+                      );
+
+                      if (stageComplete && activeQuest.current_stage < activeQuest.quest_details.stages.length) {
+                        setActiveQuest({
+                          ...activeQuest,
+                          completed_articles: updatedArticles,
+                          golden_articles: golden ? [
+                            ...(activeQuest.golden_articles || []),
+                            currentArticle
+                          ] : activeQuest.golden_articles,
+                          current_stage: activeQuest.current_stage + 1
+                        });
+                      }
+
+                      // Update articles read count
+                      loadAllData();
+                    } catch (error) {
+                      console.error('Error tracking article completion:', error);
+                    }
+                  }
+
+                  setShowQuiz(false);
+                  setCurrentArticle('');
+                }}
+                onClose={() => {
+                  setShowQuiz(false);
+                  setCurrentArticle('');
+                }}
+              />
+            )}
+
             {activeQuest && activeQuest.quest_details && (
               <QuestPath
                 stages={activeQuest.quest_details.stages}
                 currentStage={activeQuest.current_stage || 1}
                 completedArticles={activeQuest.completed_articles || []}
-                onStageClick={(stage) => {
-                  // Navigate to Wikipedia article when clicking on a stage
-                  if (stage.current && stage.articles && stage.articles.length > 0) {
-                    const nextArticle = stage.articles.find(
-                      (article: string) => !activeQuest.completed_articles?.includes(article)
-                    );
-                    if (nextArticle) {
-                      window.open(`https://en.wikipedia.org/wiki/${nextArticle.replace(/ /g, '_')}`, '_blank');
-                    }
+                onStageClick={(stage: any) => {
+                  // Handle article selection from the stage panel
+                  const article = stage.currentArticle;
+                  if (article && !activeQuest.completed_articles?.includes(article)) {
+                    // Track that we're reading this article
+                    setCurrentArticle(article);
+                    setCurrentArticleIcon(stage.articleIcons?.[article] || stage.badge || '📖');
+                    setIsStructuredMode(true); // Mark as structured mode
+
+                    // Open Wikipedia article with structured mode flag
+                    const wikiUrl = `https://en.wikipedia.org/wiki/${article.replace(/ /g, '_')}?wq_mode=structured`;
+                    window.open(wikiUrl, '_blank');
+
+                    // Show a notification to take quiz when ready
+                    alert(`Reading ${article}! When you're done reading, close this alert to take the quiz.`);
+
+                    // Show quiz after alert is closed
+                    setShowQuiz(true);
                   }
                 }}
                 onBack={() => setActiveQuest(null)}
@@ -614,6 +772,31 @@ function EnhancedDashboard({ userId, onLogout }: EnhancedDashboardProps) {
                 </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Explorer Mode Tab */}
+        {activeTab === 'explorer' && (
+          <div className="explorer-tab">
+            <ExplorerMode
+              userId={userId}
+              completedArticles={articles.map(a => a.wikipedia_title)}
+              goldenArticles={goldenArticles}
+              onStartArticle={(article, category, level) => {
+                setCurrentArticle(article);
+                setCurrentArticleIcon('📚');
+                setIsStructuredMode(true); // Mark as structured mode
+
+                // Open Wikipedia article with structured mode flag
+                const wikiUrl = `https://en.wikipedia.org/wiki/${article.replace(/ /g, '_')}?wq_mode=structured`;
+                window.open(wikiUrl, '_blank');
+
+                // Show notification to take quiz when ready
+                alert(`Reading ${article}! When you're done reading, close this alert to take the quiz.`);
+                setShowQuiz(true);
+              }}
+              onBack={() => setActiveTab('overview')}
+            />
           </div>
         )}
       </main>

@@ -25,7 +25,7 @@ app.use(morgan('dev'));
 // Initialize Supabase client
 export const supabase = createClient(
   process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
 // Health check endpoint
@@ -65,6 +65,8 @@ import analyticsRouter from './routes/analytics';
 import achievementsRouter from './routes/achievements';
 import questsRouter from './routes/quests';
 import challengesRouter from './routes/challenges';
+import quizRouter from './routes/quiz';
+import heartsRouter from './routes/hearts';
 
 app.use('/api/users', usersRouter);
 app.use('/api/articles', articlesRouter);
@@ -74,6 +76,8 @@ app.use('/api/analytics', analyticsRouter);
 app.use('/api/achievements', achievementsRouter);
 app.use('/api/quests', questsRouter);
 app.use('/api/challenges', challengesRouter);
+app.use('/api/quiz', quizRouter);
+app.use('/api/hearts', heartsRouter);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

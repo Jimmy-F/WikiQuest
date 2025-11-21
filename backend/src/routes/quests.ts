@@ -18,6 +18,7 @@ const QUEST_LIBRARY = [
         description: 'Start with the absolute basics',
         story: 'Every journey begins with a single step. Let\'s start with the simplest concepts.',
         articles: ['Water', 'Air', 'Fire'],
+        articleIcons: { 'Water': '💧', 'Air': '💨', 'Fire': '🔥' },
         xp_reward: 30,
         badge: '💧',
         icon: '🚶'
@@ -28,6 +29,7 @@ const QUEST_LIBRARY = [
         description: 'Understand what everything is made of',
         story: 'Now let\'s dive deeper into what makes up our world.',
         articles: ['Atom', 'Molecule', 'Element'],
+        articleIcons: { 'Atom': '⚛️', 'Molecule': '🔬', 'Element': '⚗️' },
         xp_reward: 40,
         badge: '⚛️',
         icon: '🧱'
@@ -38,6 +40,7 @@ const QUEST_LIBRARY = [
         description: 'How does life work?',
         story: 'Life is all around us. Let\'s understand its fundamentals.',
         articles: ['Cell', 'DNA', 'Photosynthesis'],
+        articleIcons: { 'Cell': '🦠', 'DNA': '🧬', 'Photosynthesis': '🌿' },
         xp_reward: 40,
         badge: '🌿',
         icon: '🌱'
@@ -48,6 +51,7 @@ const QUEST_LIBRARY = [
         description: 'Discover the forces that shape our world',
         story: 'Invisible forces govern everything. Time to understand them.',
         articles: ['Gravity', 'Energy', 'Light'],
+        articleIcons: { 'Gravity': '🪐', 'Energy': '⚡', 'Light': '💡' },
         xp_reward: 50,
         badge: '⚡',
         icon: '🌪️'
@@ -58,6 +62,7 @@ const QUEST_LIBRARY = [
         description: 'Explore Earth, our home',
         story: 'Let\'s explore the planet we call home.',
         articles: ['Earth', 'Atmosphere', 'Climate'],
+        articleIcons: { 'Earth': '🌍', 'Atmosphere': '☁️', 'Climate': '🌡️' },
         xp_reward: 50,
         badge: '🌍',
         icon: '🌏'
@@ -68,6 +73,7 @@ const QUEST_LIBRARY = [
         description: 'Discover Earth\'s geography',
         story: 'From the highest peaks to the deepest oceans.',
         articles: ['Continent', 'Ocean', 'Island'],
+        articleIcons: { 'Continent': '🗺️', 'Ocean': '🌊', 'Island': '🏝️' },
         xp_reward: 60,
         badge: '🗺️',
         icon: '⛰️'

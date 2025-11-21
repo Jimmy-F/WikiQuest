@@ -6,6 +6,7 @@ interface Stage {
   title: string;
   description: string;
   articles: string[];
+  articleIcons?: { [key: string]: string };
   xp_reward: number;
   badge: string;
   icon: string;
@@ -23,6 +24,8 @@ interface QuestPathProps {
 }
 
 const QuestPath: React.FC<QuestPathProps> = ({ stages, currentStage, completedArticles, onStageClick, onBack }) => {
+  const [selectedStage, setSelectedStage] = React.useState<Stage | null>(null);
+
   // Calculate completion for each stage
   const stagesWithStatus = stages.map((stage, index) => {
     const stageNum = index + 1;
@@ -67,6 +70,12 @@ const QuestPath: React.FC<QuestPathProps> = ({ stages, currentStage, completedAr
               <stop offset="100%" stopColor="#8B5CF6" />
             </linearGradient>
 
+            {/* Base path gradient */}
+            <linearGradient id="basePathGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#94A3B8" />
+              <stop offset="100%" stopColor="#CBD5E1" />
+            </linearGradient>
+
             {/* Glow filter */}
             <filter id="glow">
               <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
@@ -82,26 +91,7 @@ const QuestPath: React.FC<QuestPathProps> = ({ stages, currentStage, completedAr
             </filter>
           </defs>
 
-          {/* Path shadow */}
-          <path
-            className="path-shadow"
-            d="M 50 5
-               C 62.5 5, 75 10, 75 15
-               C 75 20, 62.5 25, 50 25
-               C 37.5 25, 25 30, 25 35
-               C 25 40, 25 40, 25 45
-               C 25 50, 37.5 55, 50 55
-               C 62.5 55, 75 60, 75 65
-               C 75 70, 62.5 75, 50 75"
-            fill="none"
-            stroke="rgba(0,0,0,0.1)"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeDasharray="3 2"
-            transform="translate(0.3, 0.5)"
-          />
-
-          {/* Base path - larger dots */}
+          {/* Base path - smaller dots */}
           <path
             className="path-base"
             d="M 50 5
@@ -113,10 +103,11 @@ const QuestPath: React.FC<QuestPathProps> = ({ stages, currentStage, completedAr
                C 62.5 55, 75 60, 75 65
                C 75 70, 62.5 75, 50 75"
             fill="none"
-            stroke="#E5E7EB"
-            strokeWidth="2"
+            stroke="#E2E8F0"
+            strokeWidth="0.5"
             strokeLinecap="round"
-            strokeDasharray="3 2"
+            strokeDasharray="1 2"
+            opacity="0.6"
           />
 
           {/* Completed path */}
@@ -131,14 +122,15 @@ const QuestPath: React.FC<QuestPathProps> = ({ stages, currentStage, completedAr
                C 62.5 55, 75 60, 75 65
                C 75 70, 62.5 75, 50 75"
             fill="none"
-            stroke="url(#pathGradient)"
-            strokeWidth="2"
+            stroke="#64748B"
+            strokeWidth="1"
             strokeLinecap="round"
-            strokeDasharray="3 2"
-            filter="url(#glow)"
+            strokeDasharray="1 2"
             style={{
-              strokeDashoffset: `${100 - (currentStage - 1) * 12.5}`,
-              pathLength: 100
+              strokeDashoffset: 0,
+              strokeDasharray: `${(currentStage - 1) * 12.5} ${100}`,
+              pathLength: 100,
+              transition: 'stroke-dasharray 0.5s ease-in-out'
             }}
           />
         </svg>
@@ -162,9 +154,9 @@ const QuestPath: React.FC<QuestPathProps> = ({ stages, currentStage, completedAr
             return (
               <div
                 key={stage.stage}
-                className={`stage-node ${stage.completed ? 'completed' : ''} ${stage.current ? 'current' : ''} ${stage.locked ? 'locked' : ''}`}
+                className={`stage-node ${stage.completed ? 'completed' : ''} ${stage.current ? 'current' : ''} ${stage.locked ? 'locked' : ''} ${selectedStage?.stage === stage.stage ? 'selected' : ''}`}
                 style={position}
-                onClick={() => !stage.locked && onStageClick(stage)}
+                onClick={() => setSelectedStage(stage)}
               >
                 {/* Outer ring */}
                 <div className="stage-ring-outer">
@@ -199,15 +191,20 @@ const QuestPath: React.FC<QuestPathProps> = ({ stages, currentStage, completedAr
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM8.9 6c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2H8.9V6z"/>
                     </svg>
+                  ) : stage.completed ? (
+                    <span className="stage-icon">{stage.badge || '✓'}</span>
                   ) : (
-                    <span className="stage-number">{stage.stage}</span>
+                    <span className="stage-icon">{stage.icon || stage.stage}</span>
                   )}
                 </div>
 
                 {/* Hover tooltip */}
                 <div className="stage-tooltip">
                   <div className="tooltip-arrow"></div>
-                  <h4>{stage.title}</h4>
+                  <h4>
+                    <span className="tooltip-icon">{stage.icon}</span>
+                    {stage.title}
+                  </h4>
                   <p>{stage.description}</p>
 
                   <div className="articles-list">
@@ -220,13 +217,14 @@ const QuestPath: React.FC<QuestPathProps> = ({ stages, currentStage, completedAr
                             </svg>
                           )}
                         </div>
+                        <span className="article-icon-small">{stage.articleIcons?.[article] || ''}</span>
                         <span>{article}</span>
                       </div>
                     ))}
                   </div>
 
                   <div className="tooltip-footer">
-                    <span className="xp-badge">+{stage.xp_reward} XP</span>
+                    <span className="xp-badge">{stage.badge} +{stage.xp_reward} XP</span>
                     {stage.current && (
                       <button className="start-btn">Start →</button>
                     )}
@@ -277,14 +275,75 @@ const QuestPath: React.FC<QuestPathProps> = ({ stages, currentStage, completedAr
           </div>
         </div>
 
-        {/* Current stage card */}
-        {stagesWithStatus.find(s => s.current) && (
-          <div className="current-stage-card">
-            <div className="stage-icon">📚</div>
-            <div className="stage-info">
-              <h4>Current: {stagesWithStatus.find(s => s.current)?.title}</h4>
-              <p>{stagesWithStatus.find(s => s.current)?.description}</p>
+        {/* Selected stage details */}
+        {selectedStage && (
+          <div className="selected-stage-panel">
+            <div className="panel-header">
+              <h3>
+                <span className="stage-detail-icon">{selectedStage.icon}</span>
+                Stage {selectedStage.stage}: {selectedStage.title}
+              </h3>
+              <p className="stage-description">{selectedStage.description}</p>
             </div>
+
+            <div className="articles-selection-grid">
+              {selectedStage.articles.map((article, idx) => {
+                const isCompleted = completedArticles.includes(article);
+                return (
+                  <div
+                    key={idx}
+                    className={`article-select-card ${isCompleted ? 'completed' : ''} ${selectedStage.locked ? 'locked' : ''}`}
+                    onClick={() => {
+                      if (!selectedStage.locked && !isCompleted) {
+                        // Start the article (will trigger quiz after reading)
+                        onStageClick({ ...selectedStage, currentArticle: article });
+                      }
+                    }}
+                  >
+                    <div className="article-main-icon">
+                      {selectedStage.articleIcons?.[article] || selectedStage.badge}
+                    </div>
+                    <h4 className="article-title">{article}</h4>
+                    {isCompleted && (
+                      <div className="completion-badge">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M10 18c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8zm-2-11l-1 1 3 3 5-5-1-1-4 4-2-2z"/>
+                        </svg>
+                      </div>
+                    )}
+                    {!selectedStage.locked && !isCompleted && (
+                      <button className="start-article-btn">
+                        Start Reading →
+                      </button>
+                    )}
+                    {selectedStage.locked && (
+                      <div className="locked-overlay">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM8.9 6c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2H8.9V6z"/>
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="stage-progress-info">
+              <div className="xp-reward">
+                <span>{selectedStage.badge}</span>
+                <span>Complete all to earn {selectedStage.xp_reward} XP</span>
+              </div>
+              <div className="articles-progress">
+                {selectedStage.articles.filter(a => completedArticles.includes(a)).length} / {selectedStage.articles.length} completed
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Current stage hint when nothing selected */}
+        {!selectedStage && stagesWithStatus.find(s => s.current) && (
+          <div className="current-stage-hint">
+            <p>👆 Click on a stage above to see its articles and start learning!</p>
           </div>
         )}
       </div>
