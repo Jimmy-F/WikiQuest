@@ -300,17 +300,22 @@ const WikiRace: React.FC<WikiRaceProps> = ({ userId, onBack }) => {
 
       const data = await response.json();
       setResult(data);
-      setGameState('finished');
-
-      // Check if user beat the optimal path
-      if (!isCustom && data.clicks < data.optimalPath) {
-        setShowOptimalCelebration(true);
-        // Auto-hide after 5 seconds
-        setTimeout(() => setShowOptimalCelebration(false), 5000);
-      }
 
       if (timerRef.current) {
         clearInterval(timerRef.current);
+      }
+
+      // Check if user beat the optimal path - show celebration BEFORE results
+      if (!isCustom && data.clicks < data.optimalPath) {
+        setShowOptimalCelebration(true);
+        // Show celebration for 3 seconds, then transition to results
+        setTimeout(() => {
+          setShowOptimalCelebration(false);
+          setGameState('finished');
+        }, 3000);
+      } else {
+        // No celebration, go straight to results
+        setGameState('finished');
       }
     } catch (error) {
       console.error('Error completing race:', error);
@@ -517,6 +522,33 @@ const WikiRace: React.FC<WikiRaceProps> = ({ userId, onBack }) => {
   if (gameState === 'racing') {
     return (
       <div className="wikirace-game">
+        {/* Optimal Path Celebration Overlay */}
+        {showOptimalCelebration && result && (
+          <div className="optimal-celebration-overlay" onClick={() => {
+            setShowOptimalCelebration(false);
+            setGameState('finished');
+          }}>
+            <div className="optimal-celebration-content">
+              <div className="optimal-badge">
+                <div className="optimal-icon">⚡</div>
+                <div className="optimal-particles">
+                  {[...Array(20)].map((_, i) => (
+                    <div key={i} className="optimal-particle" style={{
+                      '--angle': `${(i / 20) * 360}deg`,
+                      '--delay': `${i * 0.05}s`
+                    } as React.CSSProperties} />
+                  ))}
+                </div>
+              </div>
+              <h2 className="optimal-title">BEAT THE OPTIMAL PATH!</h2>
+              <p className="optimal-subtitle">
+                You completed this race in {result.clicks} clicks - better than the optimal {result.optimalPath}!
+              </p>
+              <div className="optimal-achievement-text">🎯 Pathfinder Achievement Progress</div>
+            </div>
+          </div>
+        )}
+
         <div className="game-header">
           <div className="header-top">
             <button className="quit-button" onClick={resetRace}>
