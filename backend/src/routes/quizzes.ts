@@ -231,12 +231,17 @@ router.post('/:quizId/attempt', async (req: Request, res: Response) => {
     const quizFailed = score < 75;
     let heartLost = false;
 
+    console.log(`[QUIZ] User ${userId} - Score: ${score}% - Failed: ${quizFailed}`);
+
     if (quizFailed) {
+      console.log(`[HEARTS] Quiz failed, checking hearts for user ${userId}`);
       const { data: userData } = await supabase
         .from('users')
         .select('hearts, hearts_lost_today, last_heart_lost_at')
         .eq('id', userId)
         .single();
+
+      console.log(`[HEARTS] User data:`, userData);
 
       if (userData && userData.hearts > 0) {
         // Check if it's a new day (reset hearts_lost_today)
@@ -248,6 +253,7 @@ router.post('/:quizId/attempt', async (req: Request, res: Response) => {
         const heartsLostToday = isNewDay ? 0 : (userData.hearts_lost_today || 0);
 
         // Deduct heart
+        console.log(`[HEARTS] Deducting heart: ${userData.hearts} -> ${userData.hearts - 1}`);
         await supabase
           .from('users')
           .update({
@@ -266,6 +272,9 @@ router.post('/:quizId/attempt', async (req: Request, res: Response) => {
         });
 
         heartLost = true;
+        console.log(`[HEARTS] Heart deducted successfully. New count: ${userData.hearts - 1}`);
+      } else {
+        console.log(`[HEARTS] No hearts to deduct or user has 0 hearts`);
       }
     }
 

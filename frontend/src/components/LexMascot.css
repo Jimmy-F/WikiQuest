@@ -1,0 +1,112 @@
+/* Lex Mascot Animations and Styles */
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes bounce-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-30px) scale(0.8);
+  }
+  50% {
+    transform: translateY(5px) scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(79, 195, 247, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(79, 195, 247, 0.6);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Speech bubble styles */
+.speech-bubble {
+  position: relative;
+  background: white;
+  border-radius: 12px;
+  padding: 12px 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-width: 250px;
+}
+
+.speech-bubble::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 16px;
+  height: 16px;
+  background: white;
+}
+
+/* Mascot states */
+.lex-mascot-container {
+  position: relative;
+  display: inline-block;
+}
+
+.lex-mascot-container.state-victory {
+  animation: bounce-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.lex-mascot-container.state-wave {
+  animation: float 2s ease-in-out infinite;
+}
+
+.lex-mascot-container.state-thinking {
+  opacity: 0.9;
+}
+
+.lex-mascot-container.state-tired {
+  opacity: 0.7;
+  filter: grayscale(20%);
+}
+
+.lex-mascot-container.state-racing::after {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  animation: pulse-glow 1s ease-in-out infinite;
+}

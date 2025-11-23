@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import QuestPath from '../components/QuestPath';
 import QuizModal from '../components/QuizModal';
 import ExplorerMode from '../components/ExplorerMode';
 import WikiRace from '../components/WikiRace';
-import Hearts from '../components/Hearts';
+import Hearts, { HeartsRef } from '../components/Hearts';
 import AchievementPopup from '../components/AchievementPopup';
+import WikipediaViewer from '../components/WikipediaViewer';
 import './EnhancedDashboard.css';
 
 interface EnhancedDashboardProps {
@@ -60,6 +62,7 @@ function EnhancedDashboard({ userId, onLogout }: EnhancedDashboardProps) {
   const [articles, setArticles] = useState<Article[]>([]);
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [achievements, setAchievements] = useState<Record<string, Achievement[]>>({});
+  const location = useLocation();
   const [readingStats, setReadingStats] = useState<any>(null);
   const [quests, setQuests] = useState<any[]>([]);
   const [activeQuest, setActiveQuest] = useState<any>(null);
@@ -71,6 +74,43 @@ function EnhancedDashboard({ userId, onLogout }: EnhancedDashboardProps) {
   const [currentArticleIcon, setCurrentArticleIcon] = useState<string>('');
   const [goldenArticles, setGoldenArticles] = useState<string[]>([]);
   const [isStructuredMode, setIsStructuredMode] = useState(false); // Track if in Adventure/Explorer mode
+  const [activeBattle, setActiveBattle] = useState<any>(null);
+  const [heartRefreshTrigger, setHeartRefreshTrigger] = useState<number>(0); // Trigger hearts refresh
+  const [showWikiViewer, setShowWikiViewer] = useState(false); // Show embedded Wikipedia viewer
+  const heartsRef = React.useRef<HeartsRef>(null); // Ref to directly call Hearts refresh
+
+  // Auto-navigate to wikirace when there's an invite code in URL
+  useEffect(() => {
+    if (location.pathname.includes('/battle/invite/')) {
+      setActiveTab('wikirace');
+    }
+  }, [location]);
+
+  // Check for active battles
+  useEffect(() => {
+    const checkActiveBattle = async () => {
+      try {
+        const response = await fetch(`/api/battles/active/${userId}`);
+        const data = await response.json();
+        if (data.activeBattle) {
+          setActiveBattle(data.activeBattle);
+        } else {
+          // No active battle, clear it
+          setActiveBattle(null);
+        }
+      } catch (error) {
+        console.error('Error checking active battle:', error);
+      }
+    };
+
+    // Check immediately
+    checkActiveBattle();
+
+    // Then check every 5 seconds to catch when battles finish
+    const interval = setInterval(checkActiveBattle, 5000);
+
+    return () => clearInterval(interval);
+  }, [userId]);
   const [newAchievement, setNewAchievement] = useState<any>(null); // Track newly unlocked achievement for popup
 
   useEffect(() => {
@@ -224,7 +264,9 @@ function EnhancedDashboard({ userId, onLogout }: EnhancedDashboardProps) {
 
           {/* Hearts Display - moved next to level */}
           <Hearts
+            ref={heartsRef}
             userId={userId}
+            refreshTrigger={heartRefreshTrigger}
             onNoHearts={() => {
               // Show warning when out of hearts
               setActiveTab('challenges');
@@ -294,6 +336,33 @@ function EnhancedDashboard({ userId, onLogout }: EnhancedDashboardProps) {
         </div>
       </header>
 
+      {/* Active Battle Banner - shows on all pages */}
+      {activeBattle && (
+        <div className="active-battle-banner">
+          <div className="banner-content">
+            <div className="banner-icon">⚔️</div>
+            <div className="banner-info">
+              <div className="banner-title">Battle in Progress!</div>
+              <div className="banner-subtitle">
+                {activeBattle.start_article} → {activeBattle.end_article}
+              </div>
+            </div>
+            <button
+              className="btn-rejoin-battle"
+              onClick={() => {
+                if (activeTab !== 'wikirace') {
+                  setActiveTab('wikirace');
+                }
+                // If already on wikirace, the WikiRace component will handle rejoin
+              }}
+            >
+              <span>Rejoin Battle</span>
+              <span className="rejoin-arrow">→</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
       <main className="dash-main-enhanced">
         {activeTab === 'overview' && (
@@ -350,9 +419,9 @@ function EnhancedDashboard({ userId, onLogout }: EnhancedDashboardProps) {
                 <div className="stat-label">Articles Read</div>
               </div>
               <div className="stat-card">
-                <div className="stat-icon">⏱️</div>
-                <div className="stat-value">{readingStats?.total_reading_time || 0}</div>
-                <div className="stat-label">Minutes Read</div>
+                <div className="stat-icon">🏁</div>
+                <div className="stat-value">{readingStats?.total_races || 0}</div>
+                <div className="stat-label">Races Complete</div>
               </div>
               <div className="stat-card">
                 <div className="stat-icon">✨</div>
@@ -361,8 +430,18 @@ function EnhancedDashboard({ userId, onLogout }: EnhancedDashboardProps) {
               </div>
               <div className="stat-card">
                 <div className="stat-icon">🎯</div>
-                <div className="stat-value">{readingStats?.average_quiz_score || 0}%</div>
-                <div className="stat-label">Avg Score</div>
+                <div className="stat-value">{Math.round(readingStats?.average_quiz_score || 0)}%</div>
+                <div className="stat-label">Quiz Accuracy</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-icon">🏆</div>
+                <div className="stat-value">{readingStats?.gold_medals || 0}</div>
+                <div className="stat-label">Gold Medals</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-icon">⏱️</div>
+                <div className="stat-value">{readingStats?.best_race_time || '--'}s</div>
+                <div className="stat-label">Best Time</div>
               </div>
             </div>
 
@@ -596,15 +675,8 @@ function EnhancedDashboard({ userId, onLogout }: EnhancedDashboardProps) {
                     setCurrentArticleIcon(stage.articleIcons?.[article] || stage.badge || '📖');
                     setIsStructuredMode(true); // Mark as structured mode
 
-                    // Open Wikipedia article with structured mode flag
-                    const wikiUrl = `https://en.wikipedia.org/wiki/${article.replace(/ /g, '_')}?wq_mode=structured`;
-                    window.open(wikiUrl, '_blank');
-
-                    // Show a notification to take quiz when ready
-                    alert(`Reading ${article}! When you're done reading, close this alert to take the quiz.`);
-
-                    // Show quiz after alert is closed
-                    setShowQuiz(true);
+                    // Show embedded Wikipedia viewer
+                    setShowWikiViewer(true);
                   }
                 }}
                 onBack={() => setActiveQuest(null)}
@@ -718,14 +790,7 @@ function EnhancedDashboard({ userId, onLogout }: EnhancedDashboardProps) {
                 setCurrentArticle(article);
                 setCurrentArticleIcon('📚');
                 setIsStructuredMode(true); // Mark as structured mode
-
-                // Open Wikipedia article with structured mode flag
-                const wikiUrl = `https://en.wikipedia.org/wiki/${article.replace(/ /g, '_')}?wq_mode=structured`;
-                window.open(wikiUrl, '_blank');
-
-                // Show notification to take quiz when ready
-                alert(`Reading ${article}! When you're done reading, close this alert to take the quiz.`);
-                setShowQuiz(true);
+                setShowWikiViewer(true);
               }}
               onBack={() => setActiveTab('overview')}
             />
@@ -738,10 +803,28 @@ function EnhancedDashboard({ userId, onLogout }: EnhancedDashboardProps) {
             <WikiRace
               userId={userId}
               onBack={() => setActiveTab('overview')}
+              onBattleComplete={() => setActiveBattle(null)}
+              activeBattleFromParent={activeBattle}
             />
           </div>
         )}
       </main>
+
+      {/* Wikipedia Viewer - embedded reading experience */}
+      {showWikiViewer && currentArticle && (
+        <WikipediaViewer
+          article={currentArticle}
+          articleIcon={currentArticleIcon}
+          onStartQuiz={() => {
+            setShowWikiViewer(false);
+            setShowQuiz(true);
+          }}
+          onClose={() => {
+            setShowWikiViewer(false);
+            setCurrentArticle('');
+          }}
+        />
+      )}
 
       {/* Global Quiz Modal - available for all tabs */}
       {showQuiz && currentArticle && (
@@ -765,6 +848,11 @@ function EnhancedDashboard({ userId, onLogout }: EnhancedDashboardProps) {
                 });
 
                 const heartResult = await response.json();
+
+                // Trigger hearts UI refresh immediately
+                if (heartsRef.current) {
+                  await heartsRef.current.refresh();
+                }
 
                 if (!heartResult.canContinue) {
                   // No more hearts - redirect to challenges
@@ -868,8 +956,11 @@ function EnhancedDashboard({ userId, onLogout }: EnhancedDashboardProps) {
             }
 
             // Close quiz modal after completion is tracked
-            setShowQuiz(false);
-            setCurrentArticle('');
+            // Small delay to ensure hearts UI updates
+            setTimeout(() => {
+              setShowQuiz(false);
+              setCurrentArticle('');
+            }, 100);
           }}
           onClose={() => {
             setShowQuiz(false);

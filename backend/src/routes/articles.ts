@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { supabase } from '../server';
 import { checkAllAchievements } from '../services/achievementService';
+import { checkLevelUp, calculateLevel } from '../utils/levelingSystem';
 
 const router = Router();
 
@@ -145,12 +146,19 @@ router.post('/complete', async (req: Request, res: Response) => {
 
     if (userData) {
       const xpGained = golden ? 20 : 10; // Bonus XP for golden completion
+      const oldXP = userData.total_xp || 0;
+      const newXP = oldXP + xpGained;
+
+      // Check for level up
+      const levelUpInfo = checkLevelUp(oldXP, newXP);
+      const newLevel = calculateLevel(newXP);
 
       await supabase
         .from('users')
         .update({
           articles_read: (userData.articles_read || 0) + 1,
-          total_xp: (userData.total_xp || 0) + xpGained
+          total_xp: newXP,
+          current_level: newLevel
         })
         .eq('id', userId);
 
@@ -320,6 +328,22 @@ router.get('/stats/:userId', async (req: Request, res: Response) => {
 
     if (quizzesError) throw quizzesError;
 
+    // Get WikiRace stats
+    const { data: wikiRaces, error: racesError } = await supabase
+      .from('wiki_races')
+      .select('*')
+      .eq('user_id', userId)
+      .not('completed_at', 'is', null);
+
+    if (racesError) throw racesError;
+
+    // Calculate WikiRace statistics
+    const totalRaces = wikiRaces?.length || 0;
+    const goldMedals = wikiRaces?.filter(r => r.medal === 'gold').length || 0;
+    const bestRaceTime = wikiRaces?.length
+      ? Math.min(...wikiRaces.map(r => r.time_seconds).filter(t => t > 0))
+      : null;
+
     // Calculate category stats
     const categoryCount: Record<string, number> = {};
     articles?.forEach(article => {
@@ -344,7 +368,7 @@ router.get('/stats/:userId', async (req: Request, res: Response) => {
       total_reading_time: Math.round((articles?.reduce((sum, a) => sum + (a.reading_time_seconds || 0), 0) || 0) / 60), // in minutes
       total_quizzes: quizzes?.length || 0,
       average_quiz_score: quizzes?.length
-        ? Math.round(quizzes.reduce((sum, q) => sum + ((q.score / q.total_questions) * 100), 0) / quizzes.length)
+        ? Math.round(quizzes.reduce((sum, q) => sum + q.score, 0) / quizzes.length)
         : 0,
       favorite_categories: topCategories,
       unique_reading_days: uniqueDays.size,
@@ -352,7 +376,11 @@ router.get('/stats/:userId', async (req: Request, res: Response) => {
         const weekAgo = new Date();
         weekAgo.setDate(weekAgo.getDate() - 7);
         return new Date(a.last_accessed || a.created_at) > weekAgo;
-      }).length || 0
+      }).length || 0,
+      // WikiRace stats
+      total_races: totalRaces,
+      gold_medals: goldMedals,
+      best_race_time: bestRaceTime
     };
 
     res.json({ stats });

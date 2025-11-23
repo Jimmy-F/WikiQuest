@@ -42,6 +42,7 @@
 }
 
 .quiz-header {
+  position: relative;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -66,20 +67,31 @@
 }
 
 .close-btn {
-  width: 32px;
-  height: 32px;
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  border: none;
-  background: #f1f5f9;
+  border: 2px solid #e2e8f0;
+  background: white;
   color: #64748b;
   font-size: 24px;
   cursor: pointer;
   transition: all 0.2s ease;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 300;
+  line-height: 1;
 }
 
 .close-btn:hover {
-  background: #e2e8f0;
-  color: #334155;
+  background: #fee2e2;
+  border-color: #ef4444;
+  color: #dc2626;
+  transform: scale(1.1);
 }
 
 .quiz-progress {
@@ -209,6 +221,7 @@
 }
 
 .results-header {
+  position: relative;
   padding: 32px;
   text-align: center;
   border-radius: 20px 20px 0 0;

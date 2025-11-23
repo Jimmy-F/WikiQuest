@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { getQuizForArticle, evaluateQuizResult } from '../data/quizQuestions';
+import { supabase } from '../server';
 
 const router = Router();
 
@@ -68,12 +69,6 @@ router.post('/submit', async (req: Request, res: Response) => {
     const quizFailed = !evaluation.passed;
 
     if (quizFailed && userId) {
-      const { createClient } = await import('@supabase/supabase-js');
-      const supabase = createClient(
-        process.env.SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_KEY!
-      );
-
       const { data: userData } = await supabase
         .from('users')
         .select('hearts, hearts_lost_today, last_heart_lost_at')

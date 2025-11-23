@@ -73,11 +73,25 @@ const QuizModal: React.FC<QuizModalProps> = ({ article, articleIcon, userId, onC
         })
       });
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const data = await response.json();
+
+      // Validate response data
+      if (!data || !data.results || !Array.isArray(data.results)) {
+        console.error('Invalid quiz response:', data);
+        throw new Error('Invalid quiz response format');
+      }
+
       setResults(data);
       setShowResults(true);
     } catch (error) {
       console.error('Error submitting quiz:', error);
+      // Show error to user
+      alert('Failed to submit quiz. Please try again.');
+      onClose();
     }
   };
 
@@ -134,7 +148,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ article, articleIcon, userId, onC
 
           <div className="results-breakdown">
             <h3>Review Your Answers:</h3>
-            {results.results.map((result: any, idx: number) => (
+            {results.results && results.results.map((result: any, idx: number) => (
               <div key={idx} className={`result-item ${result.correct ? 'correct' : 'incorrect'}`}>
                 <div className="result-question">Q{idx + 1}: {questions[idx].question}</div>
                 <div className="result-answer">
@@ -159,11 +173,11 @@ const QuizModal: React.FC<QuizModalProps> = ({ article, articleIcon, userId, onC
               </button>
             ) : (
               <>
-                <button className="btn-retry" onClick={() => window.location.reload()}>
-                  Try Again
+                <button className="btn-complete" onClick={onClose}>
+                  Close & Review
                 </button>
-                <button className="btn-close" onClick={onClose}>
-                  Review Article
+                <button className="btn-close" onClick={() => window.location.reload()}>
+                  Retry Quiz
                 </button>
               </>
             )}

@@ -1209,3 +1209,89 @@
     align-items: center;
   }
 }
+
+/* Active Battle Banner */
+.active-battle-banner {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin: 20px 32px;
+  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3);
+  animation: pulse-banner 2s ease-in-out infinite;
+}
+
+@keyframes pulse-banner {
+  0%, 100% {
+    box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3);
+  }
+  50% {
+    box-shadow: 0 8px 32px rgba(239, 68, 68, 0.5);
+  }
+}
+
+.banner-content {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.banner-icon {
+  font-size: 48px;
+  animation: bounce 1s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.banner-info {
+  flex: 1;
+}
+
+.banner-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 4px;
+}
+
+.banner-subtitle {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+}
+
+.btn-rejoin-battle {
+  background: white;
+  color: #dc2626;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.btn-rejoin-battle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.rejoin-arrow {
+  font-size: 20px;
+  transition: transform 0.2s;
+}
+
+.btn-rejoin-battle:hover .rejoin-arrow {
+  transform: translateX(4px);
+}

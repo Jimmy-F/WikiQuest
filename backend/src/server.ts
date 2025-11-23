@@ -69,6 +69,9 @@ import quizRouter from './routes/quiz';
 import heartsRouter from './routes/hearts';
 import leaderboardRouter from './routes/leaderboard';
 import wikiraceRouter from './routes/wikirace';
+import battlesRouter from './routes/battles';
+import lobbiesRouter from './routes/lobbies';
+import matchmakingRouter from './routes/matchmaking';
 
 app.use('/api/users', usersRouter);
 app.use('/api/articles', articlesRouter);
@@ -82,6 +85,9 @@ app.use('/api/quiz', quizRouter);
 app.use('/api/hearts', heartsRouter);
 app.use('/api/leaderboard', leaderboardRouter);
 app.use('/api/wikirace', wikiraceRouter);
+app.use('/api/battles', battlesRouter);
+app.use('/api/lobbies', lobbiesRouter);
+app.use('/api/matchmaking', matchmakingRouter);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

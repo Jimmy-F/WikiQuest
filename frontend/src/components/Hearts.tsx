@@ -1,9 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
 import './Hearts.css';
 
 interface HeartsProps {
   userId: string;
   onNoHearts?: () => void;
+  refreshTrigger?: number; // Add trigger to force refresh
+}
+
+export interface HeartsRef {
+  refresh: () => Promise<void>;
 }
 
 interface HeartStatus {
@@ -13,7 +18,7 @@ interface HeartStatus {
   canPlay: boolean;
 }
 
-const Hearts: React.FC<HeartsProps> = ({ userId, onNoHearts }) => {
+const Hearts = forwardRef<HeartsRef, HeartsProps>(({ userId, onNoHearts, refreshTrigger }, ref) => {
   const [heartStatus, setHeartStatus] = useState<HeartStatus>({
     hearts: 5,
     maxHearts: 5,
@@ -22,6 +27,8 @@ const Hearts: React.FC<HeartsProps> = ({ userId, onNoHearts }) => {
   });
   const [timeRemaining, setTimeRemaining] = useState<string>('');
   const [showRefillModal, setShowRefillModal] = useState(false);
+  const [showHeartLoss, setShowHeartLoss] = useState(false);
+  const [previousHearts, setPreviousHearts] = useState<number>(5);
 
   useEffect(() => {
     fetchHeartStatus();
@@ -29,12 +36,23 @@ const Hearts: React.FC<HeartsProps> = ({ userId, onNoHearts }) => {
     return () => clearInterval(interval);
   }, [userId]);
 
+  // Refresh when refreshTrigger changes
+  useEffect(() => {
+    if (refreshTrigger) {
+      fetchHeartStatus();
+    }
+  }, [refreshTrigger]);
+
   useEffect(() => {
     // Update countdown timer
     if (heartStatus.timeUntilNextHeart && heartStatus.hearts < heartStatus.maxHearts) {
+      // Store the target time when component mounts
+      const targetTime = Date.now() + heartStatus.timeUntilNextHeart;
+
       const interval = setInterval(() => {
-        const remaining = heartStatus.timeUntilNextHeart! - (Date.now() - new Date().getTime());
+        const remaining = targetTime - Date.now();
         if (remaining <= 0) {
+          setTimeRemaining('Refilling...');
           fetchHeartStatus(); // Refetch when timer expires
         } else {
           const minutes = Math.floor(remaining / 60000);
@@ -52,6 +70,14 @@ const Hearts: React.FC<HeartsProps> = ({ userId, onNoHearts }) => {
     try {
       const response = await fetch(`/api/hearts/${userId}`);
       const data = await response.json();
+
+      // Detect heart loss and trigger animation
+      if (data.hearts < previousHearts) {
+        setShowHeartLoss(true);
+        setTimeout(() => setShowHeartLoss(false), 2000);
+      }
+
+      setPreviousHearts(data.hearts);
       setHeartStatus(data);
 
       if (!data.canPlay && onNoHearts) {
@@ -61,6 +87,11 @@ const Hearts: React.FC<HeartsProps> = ({ userId, onNoHearts }) => {
       console.error('Error fetching heart status:', error);
     }
   };
+
+  // Expose refresh method to parent via ref
+  useImperativeHandle(ref, () => ({
+    refresh: fetchHeartStatus
+  }));
 
   const handleRefillHearts = async () => {
     try {
@@ -112,6 +143,32 @@ const Hearts: React.FC<HeartsProps> = ({ userId, onNoHearts }) => {
 
   return (
     <>
+      {/* Heart Loss Animation Overlay */}
+      {showHeartLoss && (
+        <div className="heart-loss-overlay">
+          <div className="heart-loss-content">
+            <div className="heart-loss-icon-container">
+              <div className="broken-heart">💔</div>
+              {/* Particle effects */}
+              <div className="heart-particles">
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="heart-particle"
+                    style={{
+                      '--angle': `${i * 30}deg`,
+                      '--delay': `${i * 0.05}s`
+                    } as React.CSSProperties}
+                  />
+                ))}
+              </div>
+            </div>
+            <h2 className="heart-loss-title">Heart Lost!</h2>
+            <p className="heart-loss-subtitle">Study harder next time</p>
+          </div>
+        </div>
+      )}
+
       <div className="hearts-container">
         <div className="hearts-display">
           {renderHearts()}
@@ -185,6 +242,8 @@ const Hearts: React.FC<HeartsProps> = ({ userId, onNoHearts }) => {
       )}
     </>
   );
-};
+});
+
+Hearts.displayName = 'Hearts';
 
 export default Hearts;

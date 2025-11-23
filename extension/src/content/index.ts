@@ -353,7 +353,7 @@ class WikiQuestContent {
       return;
     }
 
-    // Only show quiz if we've read a section and have content
+    // Only show quiz button if we've read a section and have content
     if (this.currentSection &&
         this.currentSectionContent.length > 0 &&
         !this.sectionsRead.includes(this.currentSection)) {
@@ -361,16 +361,13 @@ class WikiQuestContent {
       // Mark section as read
       this.sectionsRead.push(this.currentSection);
 
-      // Check if we should show a quiz
+      // Check if we should offer a quiz
       const now = Date.now();
       const timeSinceLastQuiz = now - this.lastQuizTime;
 
       if (timeSinceLastQuiz >= this.quizCooldown && !this.quizActive) {
-        this.lastQuizTime = now;
-        this.quizActive = true;
-
-        // Quiz on the PREVIOUS section we just finished reading
-        await this.showSectionQuiz(this.currentSection, this.currentSectionContent);
+        // Show a button to take quiz instead of forcing it
+        this.showQuizPrompt(this.currentSection, this.currentSectionContent);
       }
     }
 
@@ -382,6 +379,56 @@ class WikiQuestContent {
     if (this.articleId) {
       await this.updateProgress();
     }
+  }
+
+  showQuizPrompt(sectionTitle: string, sectionContent: string[]) {
+    // Remove any existing quiz prompts
+    const existingPrompt = document.getElementById('wikiquest-quiz-prompt');
+    if (existingPrompt) {
+      existingPrompt.remove();
+    }
+
+    // Create floating quiz prompt button
+    const prompt = document.createElement('div');
+    prompt.id = 'wikiquest-quiz-prompt';
+    prompt.innerHTML = `
+      <div class="wq-quiz-prompt-container">
+        <div class="wq-quiz-prompt-content">
+          <div class="wq-quiz-prompt-icon">🎯</div>
+          <div class="wq-quiz-prompt-text">
+            <strong>Section Complete!</strong>
+            <p>Test your knowledge of "${sectionTitle}"</p>
+          </div>
+        </div>
+        <div class="wq-quiz-prompt-actions">
+          <button id="wq-take-quiz-btn" class="wq-prompt-btn wq-prompt-btn-primary">Take Quiz (+XP)</button>
+          <button id="wq-dismiss-quiz-btn" class="wq-prompt-btn wq-prompt-btn-secondary">Continue Reading</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(prompt);
+
+    // Add event listeners
+    document.getElementById('wq-take-quiz-btn')?.addEventListener('click', async () => {
+      prompt.remove();
+      this.lastQuizTime = Date.now();
+      this.quizActive = true;
+      await this.showSectionQuiz(sectionTitle, sectionContent);
+    });
+
+    document.getElementById('wq-dismiss-quiz-btn')?.addEventListener('click', () => {
+      prompt.remove();
+      this.lastQuizTime = Date.now(); // Update cooldown even if dismissed
+    });
+
+    // Auto-dismiss after 15 seconds
+    setTimeout(() => {
+      if (document.getElementById('wikiquest-quiz-prompt')) {
+        prompt.classList.add('wq-quiz-prompt-fadeout');
+        setTimeout(() => prompt.remove(), 300);
+      }
+    }, 15000);
   }
 
   async updateProgress() {

@@ -111,6 +111,10 @@ function App() {
           path="/dashboard"
           element={userId ? <EnhancedDashboard userId={userId} onLogout={handleLogout} /> : <Navigate to="/" />}
         />
+        <Route
+          path="/battle/invite/:code"
+          element={userId ? <EnhancedDashboard userId={userId} onLogout={handleLogout} /> : <Navigate to="/" />}
+        />
       </Routes>
     </BrowserRouter>
   );

@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { supabase } from '../server';
+import { getXPProgress, calculateLevel } from '../utils/levelingSystem';
 
 const router = Router();
 
@@ -32,13 +33,16 @@ router.get('/dashboard', async (req: Request, res: Response) => {
 
     if (!user) {
       // User doesn't exist yet, return default data
+      const progress = getXPProgress(0);
       return res.json({
         user: {
           total_xp: 0,
           current_level: 1,
           current_streak: 0,
           longest_streak: 0,
-          xpToNextLevel: 100
+          xpToNextLevel: progress.xpForNextLevel,
+          xpInCurrentLevel: 0,
+          progressPercentage: 0
         },
         thisWeek: {
           articlesRead: totalArticles,
@@ -49,10 +53,16 @@ router.get('/dashboard', async (req: Request, res: Response) => {
       });
     }
 
+    // Calculate level progress with new system
+    const progress = getXPProgress(user.total_xp);
+
     res.json({
       user: {
         ...user,
-        xpToNextLevel: ((user.current_level) * 100) - user.total_xp
+        current_level: progress.currentLevel,
+        xpToNextLevel: progress.xpForNextLevel,
+        xpInCurrentLevel: progress.xpInCurrentLevel,
+        progressPercentage: progress.progressPercentage
       },
       thisWeek: {
         articlesRead: totalArticles,
