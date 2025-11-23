@@ -37,7 +37,7 @@ router.get('/article/:articleName', async (req: Request, res: Response) => {
 // Submit quiz answers and get results
 router.post('/submit', async (req: Request, res: Response) => {
   try {
-    const { article, answers } = req.body;
+    const { article, answers, userId } = req.body;
 
     const questions = getQuizForArticle(article);
     if (questions.length === 0) {
@@ -63,6 +63,54 @@ router.post('/submit', async (req: Request, res: Response) => {
 
     const evaluation = evaluateQuizResult(correctCount, questions.length);
 
+    // Handle hearts: Deduct 1 heart if quiz failed (not passed)
+    let heartLost = false;
+    const quizFailed = !evaluation.passed;
+
+    if (quizFailed && userId) {
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabase = createClient(
+        process.env.SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_KEY!
+      );
+
+      const { data: userData } = await supabase
+        .from('users')
+        .select('hearts, hearts_lost_today, last_heart_lost_at')
+        .eq('id', userId)
+        .single();
+
+      if (userData && userData.hearts > 0) {
+        // Check if it's a new day (reset hearts_lost_today)
+        const now = new Date();
+        const lastLostDate = userData.last_heart_lost_at ? new Date(userData.last_heart_lost_at) : null;
+        const isNewDay = !lastLostDate ||
+          lastLostDate.toDateString() !== now.toDateString();
+
+        const heartsLostToday = isNewDay ? 0 : (userData.hearts_lost_today || 0);
+
+        // Deduct heart
+        await supabase
+          .from('users')
+          .update({
+            hearts: userData.hearts - 1,
+            hearts_lost_today: heartsLostToday + 1,
+            last_heart_lost_at: now.toISOString()
+          })
+          .eq('id', userId);
+
+        // Record transaction
+        await supabase.from('heart_transactions').insert({
+          user_id: userId,
+          amount: -1,
+          reason: 'quiz_failed',
+          quiz_id: null
+        });
+
+        heartLost = true;
+      }
+    }
+
     res.json({
       article,
       results,
@@ -71,11 +119,13 @@ router.post('/submit', async (req: Request, res: Response) => {
       percentage: evaluation.percentage,
       passed: evaluation.passed,
       golden: evaluation.golden,
-      message: evaluation.golden
-        ? '🏆 Perfect score! You earned a golden completion!'
-        : evaluation.passed
-        ? '✅ Great job! You passed the quiz!'
-        : '❌ Not quite. Review the material and try again!'
+      heartLost,
+      quizFailed,
+      message: quizFailed
+        ? (heartLost ? '💔 Quiz failed - 1 heart lost' : '💔 Quiz failed - No hearts left!')
+        : (evaluation.golden
+          ? '🏆 Perfect score! You earned a golden completion!'
+          : '✅ Great job! You passed the quiz!')
     });
   } catch (error: any) {
     console.error('Error submitting quiz:', error);

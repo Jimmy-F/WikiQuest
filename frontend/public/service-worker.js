@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wikiquest-v1';
+const CACHE_NAME = 'wikiquest-v2';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -17,41 +17,39 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Fetch resources from cache when offline
+// Network First strategy - try network, fallback to cache
 self.addEventListener('fetch', (event) => {
   event.respondWith(
-    caches.match(event.request)
+    fetch(event.request)
       .then((response) => {
-        // Cache hit - return response from cache
-        if (response) {
+        // Check if valid response
+        if (!response || response.status !== 200) {
           return response;
         }
 
-        // Clone the request
-        const fetchRequest = event.request.clone();
+        // Clone the response
+        const responseToCache = response.clone();
 
-        return fetch(fetchRequest).then((response) => {
-          // Check if valid response
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
-          }
+        // Cache successful GET requests (except API calls)
+        if (event.request.method === 'GET' && !event.request.url.includes('/api/')) {
+          caches.open(CACHE_NAME)
+            .then((cache) => {
+              cache.put(event.request, responseToCache);
+            });
+        }
 
-          // Clone the response
-          const responseToCache = response.clone();
-
-          // Cache successful GET requests (except API calls)
-          if (event.request.method === 'GET' && !event.request.url.includes('/api/')) {
-            caches.open(CACHE_NAME)
-              .then((cache) => {
-                cache.put(event.request, responseToCache);
-              });
-          }
-
-          return response;
-        }).catch(() => {
-          // Return offline page if available
-          return caches.match('/offline.html');
-        });
+        return response;
+      })
+      .catch(() => {
+        // Network failed, try cache
+        return caches.match(event.request)
+          .then((response) => {
+            if (response) {
+              return response;
+            }
+            // Return offline page if available
+            return caches.match('/offline.html');
+          });
       })
   );
 });

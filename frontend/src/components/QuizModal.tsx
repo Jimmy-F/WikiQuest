@@ -9,11 +9,12 @@ interface QuizQuestion {
 interface QuizModalProps {
   article: string;
   articleIcon?: string;
+  userId: string;
   onComplete: (passed: boolean, golden: boolean, percentage: number) => void;
   onClose: () => void;
 }
 
-const QuizModal: React.FC<QuizModalProps> = ({ article, articleIcon, onComplete, onClose }) => {
+const QuizModal: React.FC<QuizModalProps> = ({ article, articleIcon, userId, onComplete, onClose }) => {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
@@ -67,7 +68,8 @@ const QuizModal: React.FC<QuizModalProps> = ({ article, articleIcon, onComplete,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           article,
-          answers: finalAnswers
+          answers: finalAnswers,
+          userId
         })
       });
 

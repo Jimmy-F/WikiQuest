@@ -710,6 +710,11 @@
   padding: 0;
 }
 
+/* Wiki Race Styles */
+.wikirace-tab {
+  padding: 0;
+}
+
 .adventure-header {
   text-align: center;
   padding: 32px 0;

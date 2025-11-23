@@ -6,10 +6,23 @@ export default defineConfig({
   server: {
     port: 3001,
     host: '0.0.0.0',
+    hmr: {
+      overlay: true
+    },
+    watch: {
+      usePolling: true
+    },
     proxy: {
       '/api': {
         target: 'http://backend:3000',
         changeOrigin: true
+      }
+    }
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: undefined
       }
     }
   }

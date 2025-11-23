@@ -39,7 +39,11 @@ const WikiRace: React.FC<WikiRaceProps> = ({ userId, onBack }) => {
   const [validatingStart, setValidatingStart] = useState<boolean>(false);
   const [validatingEnd, setValidatingEnd] = useState<boolean>(false);
   const [raceAttempts, setRaceAttempts] = useState<{[key: string]: number}>({});
+  const [raceMedals, setRaceMedals] = useState<{[key: string]: string}>({});
   const [showOptimalCelebration, setShowOptimalCelebration] = useState<boolean>(false);
+  const [showPreview, setShowPreview] = useState<boolean>(false);
+  const [previewRace, setPreviewRace] = useState<Race | null>(null);
+  const [raceStats, setRaceStats] = useState<any>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const searchTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -82,15 +86,31 @@ const WikiRace: React.FC<WikiRaceProps> = ({ userId, onBack }) => {
       const data = await response.json();
       const races = data.races || [];
 
-      // Count attempts per race_id
+      // Count attempts per race_id and track best medal
       const counts: {[key: string]: number} = {};
+      const medals: {[key: string]: string} = {};
+      const medalValue: {[key: string]: number} = {
+        'bronze': 1,
+        'silver': 2,
+        'gold': 3
+      };
+
       races.forEach((race: any) => {
         if (!race.is_custom) {
           counts[race.race_id] = (counts[race.race_id] || 0) + 1;
+
+          // Track best medal
+          const currentBest = medals[race.race_id];
+          const currentMedal = race.medal;
+
+          if (!currentBest || (medalValue[currentMedal] || 0) > (medalValue[currentBest] || 0)) {
+            medals[race.race_id] = currentMedal;
+          }
         }
       });
 
       setRaceAttempts(counts);
+      setRaceMedals(medals);
     } catch (error) {
       console.error('Error loading race attempts:', error);
     }
@@ -358,6 +378,34 @@ const WikiRace: React.FC<WikiRaceProps> = ({ userId, onBack }) => {
     setResult(null);
   };
 
+  const openRacePreview = async (race: Race) => {
+    setPreviewRace(race);
+    setShowPreview(true);
+
+    // Load race-specific stats
+    try {
+      const response = await fetch(`/api/wikirace/race/${race.id}/stats?userId=${userId}`);
+      const data = await response.json();
+      setRaceStats(data);
+    } catch (error) {
+      console.error('Error loading race stats:', error);
+      setRaceStats(null);
+    }
+  };
+
+  const closePreview = () => {
+    setShowPreview(false);
+    setPreviewRace(null);
+    setRaceStats(null);
+  };
+
+  const startFromPreview = () => {
+    if (previewRace) {
+      closePreview();
+      startRace(previewRace, false);
+    }
+  };
+
   // Render race selection
   if (gameState === 'select') {
     const races: Race[] = [
@@ -513,11 +561,19 @@ const WikiRace: React.FC<WikiRaceProps> = ({ userId, onBack }) => {
         <div className="races-grid">
           {races.map(race => {
             const attempts = raceAttempts[race.id] || 0;
+            const medal = raceMedals[race.id];
+            const medalEmoji = medal === 'gold' ? '🥇' : medal === 'silver' ? '🥈' : medal === 'bronze' ? '🥉' : null;
+
             return (
-              <div key={race.id} className="race-card" onClick={() => startRace(race, false)}>
+              <div key={race.id} className="race-card" onClick={() => openRacePreview(race)}>
                 <div className="race-difficulty" style={{ backgroundColor: difficultyColors[race.difficulty as keyof typeof difficultyColors] }}>
                   {race.difficulty.toUpperCase()}
                 </div>
+                {medal && (
+                  <div className="race-medal-badge-corner">
+                    {medalEmoji}
+                  </div>
+                )}
                 <div className="race-info">
                   <div className="race-route">
                     <span className="start-article">{race.start}</span>
@@ -526,7 +582,9 @@ const WikiRace: React.FC<WikiRaceProps> = ({ userId, onBack }) => {
                   </div>
                   <div className="race-stats">
                     <span>🎯 Optimal: {race.optimalPath} clicks</span>
-                    <span className="xp-badge">+{race.difficulty === 'easy' ? '50' : race.difficulty === 'medium' ? '75' : race.difficulty === 'hard' ? '100' : '150'} XP</span>
+                    <span className={`xp-badge ${medal === 'gold' ? 'xp-earned' : ''}`}>
+                      +{race.difficulty === 'easy' ? '50' : race.difficulty === 'medium' ? '75' : race.difficulty === 'hard' ? '100' : '150'} XP
+                    </span>
                   </div>
                   {attempts > 0 && (
                     <div className="race-attempts">
@@ -538,6 +596,117 @@ const WikiRace: React.FC<WikiRaceProps> = ({ userId, onBack }) => {
             );
           })}
         </div>
+
+        {/* Race Preview Modal */}
+        {showPreview && previewRace && (
+          <div className="modal-overlay" onClick={closePreview}>
+            <div className="race-preview-modal" onClick={(e) => e.stopPropagation()}>
+              <button className="close-btn" onClick={closePreview}>×</button>
+
+              <div className="preview-header">
+                <div className="preview-title">
+                  <h2>{previewRace.start} → {previewRace.end}</h2>
+                  <div className="race-difficulty" style={{ backgroundColor: difficultyColors[previewRace.difficulty as keyof typeof difficultyColors] }}>
+                    {previewRace.difficulty.toUpperCase()}
+                  </div>
+                </div>
+                {raceMedals[previewRace.id] && (
+                  <div className="preview-medal">
+                    <span className="medal-large">
+                      {raceMedals[previewRace.id] === 'gold' ? '🥇' : raceMedals[previewRace.id] === 'silver' ? '🥈' : '🥉'}
+                    </span>
+                    <span className="medal-label">Best: {raceMedals[previewRace.id]}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="preview-content">
+                <div className="preview-stats-grid">
+                  <div className="preview-stat-card">
+                    <div className="stat-icon">🎯</div>
+                    <div className="stat-label">Optimal Path</div>
+                    <div className="stat-value">{previewRace.optimalPath} clicks</div>
+                  </div>
+                  <div className="preview-stat-card">
+                    <div className="stat-icon">✨</div>
+                    <div className="stat-label">XP Reward</div>
+                    <div className="stat-value">
+                      {previewRace.difficulty === 'easy' ? '50' : previewRace.difficulty === 'medium' ? '75' : previewRace.difficulty === 'hard' ? '100' : '150'} XP
+                    </div>
+                  </div>
+                  <div className="preview-stat-card">
+                    <div className="stat-icon">📊</div>
+                    <div className="stat-label">Your Attempts</div>
+                    <div className="stat-value">{raceAttempts[previewRace.id] || 0}</div>
+                  </div>
+                </div>
+
+                {raceStats ? (
+                  <>
+                    {raceStats.personalBest && (
+                      <div className="preview-section">
+                        <h3>Your Best Run</h3>
+                        <div className="best-run-card">
+                          <div className="best-run-stat">
+                            <span className="stat-label">Time:</span>
+                            <span className="stat-value">{formatTime(raceStats.personalBest.time_seconds)}</span>
+                          </div>
+                          <div className="best-run-stat">
+                            <span className="stat-label">Clicks:</span>
+                            <span className="stat-value">{raceStats.personalBest.clicks_count}</span>
+                          </div>
+                          <div className="best-run-stat">
+                            <span className="stat-label">Score:</span>
+                            <span className="stat-value">{raceStats.personalBest.score}/100</span>
+                          </div>
+                          <div className="best-run-stat">
+                            <span className="stat-label">Medal:</span>
+                            <span className="stat-value">
+                              {raceStats.personalBest.medal === 'gold' ? '🥇' : raceStats.personalBest.medal === 'silver' ? '🥈' : '🥉'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {raceStats.leaderboard && raceStats.leaderboard.length > 0 && (
+                      <div className="preview-section">
+                        <h3>🏆 Leaderboard (Top 5)</h3>
+                        <div className="leaderboard-list">
+                          {raceStats.leaderboard.slice(0, 5).map((entry: any, idx: number) => (
+                            <div key={idx} className={`leaderboard-entry ${entry.is_you ? 'is-you' : ''}`}>
+                              <div className="rank">#{idx + 1}</div>
+                              <div className="leaderboard-info">
+                                <div className="leaderboard-name">{entry.is_you ? 'You' : `Player ${entry.user_id.slice(0, 8)}`}</div>
+                                <div className="leaderboard-stats">
+                                  <span>⏱️ {formatTime(entry.time_seconds)}</span>
+                                  <span>👆 {entry.clicks_count}</span>
+                                  <span>🎯 {entry.score}/100</span>
+                                </div>
+                              </div>
+                              <div className="leaderboard-medal">
+                                {entry.medal === 'gold' ? '🥇' : entry.medal === 'silver' ? '🥈' : '🥉'}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="loading-stats">Loading stats...</div>
+                )}
+              </div>
+
+              <div className="preview-actions">
+                <button className="btn-secondary" onClick={closePreview}>Cancel</button>
+                <button className="btn-primary" onClick={startFromPreview}>
+                  🏁 Start Race
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }

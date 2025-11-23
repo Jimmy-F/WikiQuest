@@ -748,6 +748,7 @@ function EnhancedDashboard({ userId, onLogout }: EnhancedDashboardProps) {
         <QuizModal
           article={currentArticle}
           articleIcon={currentArticleIcon}
+          userId={userId}
           onComplete={async (passed, golden, percentage) => {
             console.log('Quiz onComplete called:', { passed, golden, percentage, currentArticle });
 

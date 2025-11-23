@@ -459,6 +459,49 @@ router.get('/history/:userId', async (req: Request, res: Response) => {
   }
 });
 
+// Get stats for a specific race (personal best + leaderboard)
+router.get('/race/:raceId/stats', async (req: Request, res: Response) => {
+  try {
+    const { raceId } = req.params;
+    const { userId } = req.query;
+
+    // Get user's personal best for this race
+    const { data: personalBest } = await supabase
+      .from('wiki_races')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('race_id', raceId)
+      .not('completed_at', 'is', null)
+      .order('score', { ascending: false })
+      .limit(1)
+      .single();
+
+    // Get top 10 leaderboard for this race
+    const { data: leaderboard } = await supabase
+      .from('wiki_races')
+      .select('user_id, time_seconds, clicks_count, score, medal')
+      .eq('race_id', raceId)
+      .not('completed_at', 'is', null)
+      .order('score', { ascending: false })
+      .order('time_seconds', { ascending: true })
+      .limit(10);
+
+    // Mark which leaderboard entries belong to the current user
+    const leaderboardWithUser = leaderboard?.map(entry => ({
+      ...entry,
+      is_you: entry.user_id === userId
+    })) || [];
+
+    res.json({
+      personalBest: personalBest || null,
+      leaderboard: leaderboardWithUser
+    });
+  } catch (error: any) {
+    console.error('Error getting race stats:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Get leaderboard for a specific race
 router.get('/leaderboard/:raceId', async (req: Request, res: Response) => {
   try {
