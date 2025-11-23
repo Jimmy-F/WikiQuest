@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wikiquest-v2';
+const CACHE_NAME = 'wikihero-v1';
 const urlsToCache = [
   '/',
   '/index.html',

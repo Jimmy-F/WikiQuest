@@ -33,7 +33,7 @@ app.get('/health', (req: Request, res: Response) => {
   res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
-    service: 'WikiQuest Backend API',
+    service: 'WikiHero Backend API',
     version: '1.0.0'
   });
 });
@@ -41,7 +41,7 @@ app.get('/health', (req: Request, res: Response) => {
 // Root endpoint
 app.get('/', (req: Request, res: Response) => {
   res.json({
-    message: 'Welcome to WikiQuest API! 🎮📚',
+    message: 'Welcome to WikiHero API! 🦸📚',
     version: '1.0.0',
     endpoints: {
       health: '/health',
@@ -105,7 +105,7 @@ app.listen(PORT, () => {
   console.log(`
 ╔══════════════════════════════════════╗
 ║                                      ║
-║   🎮 WikiQuest Backend API Started   ║
+║   🦸 WikiHero Backend API Started    ║
 ║                                      ║
 ║   Port: ${PORT}                     ║
 ║   Environment: ${process.env.NODE_ENV}   ║

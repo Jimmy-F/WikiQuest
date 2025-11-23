@@ -1,7 +1,7 @@
 {
-  "name": "WikiQuest - Learn Through Adventure",
-  "short_name": "WikiQuest",
-  "description": "Gamified Wikipedia learning with quests, achievements, and wiki races",
+  "name": "WikiHero - Become a Wikipedia Hero",
+  "short_name": "WikiHero",
+  "description": "Become a Wikipedia hero through gamified quests, competitive battles, and wiki races",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

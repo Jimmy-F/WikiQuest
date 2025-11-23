@@ -6,7 +6,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: wikiquest-backend
+    container_name: wikihero-backend
     ports:
       - "3000:3000"
     env_file:
@@ -22,7 +22,7 @@ services:
     depends_on:
       - redis
     networks:
-      - wikiquest-network
+      - wikihero-network
     dns:
       - 8.8.8.8
       - 8.8.4.4
@@ -34,7 +34,7 @@ services:
     build:
       context: ./worker
       dockerfile: Dockerfile
-    container_name: wikiquest-worker
+    container_name: wikihero-worker
     environment:
       - NODE_ENV=development
       - SUPABASE_URL=${SUPABASE_URL}
@@ -47,7 +47,7 @@ services:
     depends_on:
       - redis
     networks:
-      - wikiquest-network
+      - wikihero-network
     dns:
       - 8.8.8.8
       - 8.8.4.4
@@ -59,7 +59,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: wikiquest-frontend
+    container_name: wikihero-frontend
     ports:
       - "3001:3001"
     environment:
@@ -68,20 +68,20 @@ services:
       - ./frontend:/app
       - /app/node_modules
     networks:
-      - wikiquest-network
+      - wikihero-network
     command: npm run dev -- --host 0.0.0.0
     restart: unless-stopped
 
   # Redis (caching + queue)
   redis:
     image: redis:7-alpine
-    container_name: wikiquest-redis
+    container_name: wikihero-redis
     ports:
       - "6379:6379"
     volumes:
       - redis-data:/data
     networks:
-      - wikiquest-network
+      - wikihero-network
     command: redis-server --appendonly yes
     restart: unless-stopped
 
@@ -90,15 +90,15 @@ services:
     build:
       context: ./website
       dockerfile: Dockerfile
-    container_name: wikiquest-website
+    container_name: wikihero-website
     ports:
       - "8081:80"
     networks:
-      - wikiquest-network
+      - wikihero-network
     restart: unless-stopped
 
 networks:
-  wikiquest-network:
+  wikihero-network:
     driver: bridge
 
 volumes:

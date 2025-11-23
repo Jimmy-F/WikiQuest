@@ -1,7 +1,7 @@
 {
-  "name": "wikiquest-frontend",
+  "name": "wikihero-frontend",
   "version": "1.0.0",
-  "description": "WikiQuest Web Dashboard",
+  "description": "WikiHero Web Dashboard",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

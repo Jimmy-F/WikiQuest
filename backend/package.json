@@ -1,7 +1,7 @@
 {
-  "name": "wikiquest-backend",
+  "name": "wikihero-backend",
   "version": "1.0.0",
-  "description": "WikiQuest Backend API - Gamified Wikipedia learning platform",
+  "description": "WikiHero Backend API - Gamified Wikipedia learning platform",
   "main": "dist/server.js",
   "scripts": {
     "dev": "nodemon --watch src --ext ts --exec ts-node src/server.ts",
